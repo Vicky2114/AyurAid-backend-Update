@@ -44,4 +44,3 @@ mongoose
   });
 
 app.use("/", require("./app/routes/auth.routes.js").router);
-//
