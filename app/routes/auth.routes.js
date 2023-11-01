@@ -1,20 +1,15 @@
-<<<<<<< HEAD
-=======
-
-
->>>>>>> d41674779addbaa7176564f7a2b003b537f40bb3
 const express = require("express");
 const { verifySignUp } = require("../middlewares");
-const controller = require("../controllers/auth.controller");
-
+// const controller = require("../controllers/auth.controller");
+const UserController = require("../controllers/user_controller.js");
 const router = express.Router();
 
 router.post(
-  "/api/auth/signup",
+  "/signup",
   [verifySignUp.checkDuplicateUsernameOrEmail],
-  controller.signup
+  UserController.signup
 );
 
-router.post("/api/auth/signin", controller.signin);
-
-module.exports.router = router;
+router.post("/login", UserController.login);
+router.get("/verify/:id", UserController.verify);
+module.exports = router;

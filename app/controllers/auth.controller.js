@@ -1,9 +1,20 @@
-
 const jwt = require("jsonwebtoken");
 const config = require("../config/auth.config.js");
 const db = require("../models/index.js");
 const bcrypt = require("bcrypt");
 const User = db.user;
+
+const sendVerificationMail = (user) => {
+  const verificationToken = user.generateVerificationToken();
+  // console.log(verificationToken);
+  const url = `http://localhost:3000/api/verify/${verificationToken}`;
+
+  transporter.sendMail({
+    to: user.email,
+    subject: "Verify Account",
+    html: `Click <a href = '${url}'>here</a> to confirm your email.`,
+  });
+};
 
 exports.signin = async (req, res) => {
   try {
@@ -61,6 +72,7 @@ exports.signup = async (req, res) => {
     await user.save();
     res.status(200).send({ message: "User was registered successfully!" });
   } catch (err) {
+    console.error(err);
     res.status(500).send({ message: err.message });
   }
 };
