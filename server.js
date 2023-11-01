@@ -1,13 +1,13 @@
 const env = require("dotenv").config({
-  path: "C://Users/91787/OneDrive/Desktop/VerifyEmail/server/.env",
+  path: "C:/Users/91787/OneDrive/Desktop/AuthSystem/.env",
 }).parsed;
-
+// console.log(env);
 const express = require("express");
 const mongoose = require("mongoose");
 
 const app = express();
 
-const PORT = 3000;
+const PORT = env.PORT;
 
 mongoose
   .connect(env.MONGO_ATLAS, {

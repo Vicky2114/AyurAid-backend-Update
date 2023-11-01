@@ -6,7 +6,9 @@ const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user_model.js");
+const Token = require("../models/token.model.js");
 const config = require("../config/auth.config.js");
+const crypto = require("crypto");
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -16,10 +18,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const SALT_ROUNDS = 10;
+const HOST_URL = `http://localhost:${env.PORT}`;
+
 const sendVerificationMail = (user) => {
   const verificationToken = user.generateVerificationToken();
   // console.log(verificationToken);
-  const url = `http://localhost:3000/api/verify/${verificationToken}`;
+  const url = `${HOST_URL}/api/verify/${verificationToken}`;
 
   transporter.sendMail({
     to: user.email,
@@ -27,6 +32,7 @@ const sendVerificationMail = (user) => {
     html: `Click <a href = '${url}'>here</a> to confirm your email.`,
   });
 };
+
 exports.signup = async (req, res) => {
   const { email } = req.body;
 
@@ -42,8 +48,7 @@ exports.signup = async (req, res) => {
       });
     }
 
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+    const hashedPassword = await bcrypt.hash(req.body.password, SALT_ROUNDS);
 
     const user = await new User({
       _id: new mongoose.Types.ObjectId(),
@@ -64,8 +69,8 @@ exports.signup = async (req, res) => {
     return res.status(500).send(err);
   }
 };
+
 exports.login = async (req, res) => {
-  console.log("Loginnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn");
   try {
     const user = await User.findOne({ username: req.body.username }).exec();
 
@@ -143,6 +148,77 @@ exports.verify = async (req, res) => {
       message: "Account Verified",
     });
   } catch (err) {
+    return res.status(500).send(err);
+  }
+};
+
+const sendPasswordResetMail = (email, userId, token) => {
+  const url = `${HOST_URL}/api/reset_password?userId=${userId}&token=${token}`;
+  transporter.sendMail({
+    to: email,
+    subject: "Reset Password",
+    html: `Click <a href = '${url}'>here</a> to reset your password.`,
+  });
+};
+
+exports.requestResetPassword = async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.query.username }).exec();
+    if (!user) {
+      return res.status(404).send({ message: "User not found" });
+    }
+
+    const token = await Token.findOne({ userId: user._id });
+    if (token) await token.deleteOne();
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = await bcrypt.hash(resetToken, SALT_ROUNDS);
+
+    await new Token({
+      userId: user._id,
+      token: hashedToken,
+      createdAt: Date.now(),
+    }).save();
+
+    sendPasswordResetMail(user.email, user._id, resetToken);
+    return res.status(200).send({ message: "Password reset mail sent" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send(err);
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const token = req.query.token;
+    const userId = req.query.userId;
+    const password = req.body.password;
+
+    const fetchedToken = await Token.findOne({ userId });
+
+    if (!fetchedToken) {
+      return res
+        .status(401)
+        .send({ message: "Invalid or expired password reset token" });
+    }
+
+    const isTokenValid = await bcrypt.compare(token, fetchedToken.token);
+
+    if (!isTokenValid) {
+      return res
+        .status(401)
+        .send({ message: "Invalid  or expired password reset token" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    await User.updateOne(
+      { _id: userId },
+      { $set: { password: hashedPassword } },
+      { new: true }
+    );
+    return res.status(200).send("Password was updated successfully");
+  } catch (err) {
+    console.error(err);
     return res.status(500).send(err);
   }
 };
