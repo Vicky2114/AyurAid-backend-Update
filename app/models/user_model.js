@@ -24,11 +24,10 @@ const userSchema = mongoose.Schema({
     type: String,
   },
   dob: {
-    type: String,
+    type: Date,
   },
-  img: {
-    data: Buffer,
-    contentType: String,
+  profileImage: {
+    type: String,
   },
   password: {
     type: String,
@@ -44,8 +43,8 @@ const userSchema = mongoose.Schema({
   },
 });
 
-userSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 12);
 });
 
@@ -57,7 +56,7 @@ userSchema.methods.authenticate = async function (
 };
 
 userSchema.methods.createPasswordResetToken = function () {
-  const resetToken = crypto.randomBytes(32).toString('hex');
+  const resetToken = crypto.randomBytes(32).toString("hex");
   this.passwordResetToken = resetToken;
   this.passwordResetExpires = Date.now() + 20 * 60 * 1000;
   return resetToken;
@@ -70,7 +69,7 @@ userSchema.methods.authenticate = async function (
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
-userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   if (this.passwordChangedAt) {
     const changedTimeStamp = parseInt(
       this.passwordChangedAt.getTime() / 1000,
@@ -82,5 +81,5 @@ userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
   return false;
 };
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 module.exports = User;
