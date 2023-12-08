@@ -45,6 +45,10 @@ mongoose.connection.on("error", handleDisconnect);
 app.use(express.json());
 app.use("/api", require("./app/routes/user_routes.js"));
 
+app.get("/", (req, res) => {
+  res.end("Hello from server");
+});
+
 app.listen(PORT, () => {
   console.log(`App running on http://localhost:${PORT}`);
 });
