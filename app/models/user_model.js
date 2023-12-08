@@ -1,28 +1,86 @@
+const crypto = require("crypto");
 const mongoose = require("mongoose");
-const jwt = require("jsonwebtoken");
-const UserSchema = mongoose.Schema({
-  _id: mongoose.Schema.Types.ObjectId,
-  email: String,
-  username: String,
-  password: String,
-  fullName: String,
-  dob: Date,
-  country: String,
-  verified: {
+const validator = require("validator");
+const bcrypt = require("bcryptjs");
+
+const userSchema = mongoose.Schema({
+  fullName: {
+    type: String,
+    required: [true, "Name is required"],
+  },
+  username: {
+    type: String,
+    unique: true,
+    required: [true, "Name is required"],
+  },
+  email: {
+    type: String,
+    required: [true, "Email is required"],
+    unique: true,
+    lowercase: true,
+    validate: [validator.isEmail, "Provide Valid email"],
+  },
+  country: {
+    type: String,
+  },
+  dob: {
+    type: String,
+  },
+  img: {
+    data: Buffer,
+    contentType: String,
+  },
+  password: {
+    type: String,
+    required: [true, "Password is required"],
+    select: false,
+  },
+  passwordResetToken: String,
+  passwordResetExpires: Date,
+  active: {
     type: Boolean,
-    required: true,
-    default: false,
+    default: true,
+    select: false,
   },
 });
 
-UserSchema.methods.generateVerificationToken = function () {
-  const user = this;
-  const verificationToken = jwt.sign(
-    { ID: user._id },
-    process.env.USER_VERIFICATION_TOKEN_SECRET,
-    { expiresIn: "7d" }
-  );
-  return verificationToken;
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
+  this.password = await bcrypt.hash(this.password, 12);
+});
+
+userSchema.methods.authenticate = async function (
+  candidatePassword,
+  userPassword
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
 };
 
-module.exports = mongoose.model("User", UserSchema);
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.passwordResetToken = resetToken;
+  this.passwordResetExpires = Date.now() + 20 * 60 * 1000;
+  return resetToken;
+};
+
+userSchema.methods.authenticate = async function (
+  candidatePassword,
+  userPassword
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimeStamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+    return JWTTimestamp < changedTimeStamp;
+  }
+
+  return false;
+};
+
+const User = mongoose.model('User', userSchema);
+module.exports = User;
