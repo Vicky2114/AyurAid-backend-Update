@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 dotenv.config({ path: "./.env" });
 
 const app = express();
+app.use(express.json({ limit: "50mb" }));
 
 const PORT = process.env.PORT;
 const DB = process.env.MONGO_ATLAS.replace(
@@ -42,12 +43,13 @@ mongoose
   .catch((err) => console.log(err));
 mongoose.connection.on("error", handleDisconnect);
 
-app.use(express.json());
 app.get("/", (req, res) => {
   res.end("Hello from server");
 });
-app.use("/api", require("./app/routes/user_routes.js"));
-app.use("/api", require("./app/routes/dose_routes.js"));
+
+app.use("/api/auth", require("./app/routes/user_routes.js"));
+app.use("/api/blog", require("./app/routes/blog_routes.js"));
+app.use("/api/dose", require("./app/routes/dose_routes.js"));
 
 app.listen(PORT, () => {
   console.log(`App running on http://localhost:${PORT}`);
