@@ -42,7 +42,11 @@ exports.signup = async (req, res) => {
         expiresIn: process.env.JWT_EXPIRES_IN,
       }
     );
-    res.cookie("jwt", token, { httpOnly: false, secure: false });
+    res.cookie("jwt", token, {
+      httpOnly: false,
+      secure: false,
+      sameSite: "none",
+    });
     return res.status(201).json({
       status: "success",
       data: {
@@ -86,7 +90,11 @@ exports.login = async (req, res) => {
       }
     );
     req.user = user;
-    res.cookie("jwt", token, { httpOnly: false, secure: false });
+    res.cookie("jwt", token, {
+      httpOnly: false,
+      secure: false,
+      sameSite: "none",
+    });
     return res.status(201).json({
       status: "success",
       data: {
@@ -220,7 +228,11 @@ exports.resetPassword = async (req, res, next) => {
     }
   );
   req.user = user;
-  res.cookie("jwt", token, { httpOnly: false, secure: false });
+  res.cookie("jwt", token, {
+    httpOnly: false,
+    secure: false,
+    sameSite: "none",
+  });
 
   return res.status(200).json({
     status: "success",
