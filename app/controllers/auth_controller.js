@@ -18,7 +18,6 @@ exports.signup = async (req, res) => {
         message: "Email is already in use.",
       });
     }
-
     const user = await User.create({
       username: req.body.username,
       email: req.body.email,
@@ -26,6 +25,7 @@ exports.signup = async (req, res) => {
       fullName: req.body.fullName,
       dob: req.body.dob,
       country: req.body.country,
+      profileImage: req.body.profileImage,
     });
 
     const message = `Dear ${user.username},\n$Welcome to AyurAid!`;
@@ -91,6 +91,10 @@ exports.login = async (req, res) => {
       status: "success",
       data: {
         user: user.username,
+        email: user.email,
+        id: user._id,
+        profileImage: user.profileImage,
+        token: token,
       },
     });
   } catch (err) {
