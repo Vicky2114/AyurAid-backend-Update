@@ -50,7 +50,8 @@ exports.signup = async (req, res) => {
     return res.status(201).json({
       status: "success",
       data: {
-        user: user.username,
+        user,
+        token,
       },
     });
   } catch (err) {
@@ -102,6 +103,7 @@ exports.login = async (req, res) => {
         email: user.email,
         id: user._id,
         profileImage: user.profileImage,
+        fullname: user.fullName,
         token: token,
       },
     });
@@ -112,8 +114,8 @@ exports.login = async (req, res) => {
 
 exports.protect = async (req, res, next) => {
   let token;
-  if (req.headers.cookie) {
-    token = req.headers.cookie.split("jwt=")[1];
+  if (req.get("Token")) {
+    token = req.get("Token");
   }
 
   if (!token) {
@@ -236,6 +238,9 @@ exports.resetPassword = async (req, res, next) => {
 
   return res.status(200).json({
     status: "success",
+    data: {
+      token,
+    },
     message: "Password has Changed",
     statusCode: 200,
   });
