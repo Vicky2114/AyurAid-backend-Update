@@ -47,10 +47,7 @@ app.get("/", (req, res) => {
   res.end("Hello from server");
 });
 app.use("/api", require("./app/routes/user_routes.js"));
-
-app.get("/", (req, res) => {
-  res.end("Hello from server");
-});
+app.use("/api", require("./app/routes/dose_routes.js"));
 
 app.listen(PORT, () => {
   console.log(`App running on http://localhost:${PORT}`);
