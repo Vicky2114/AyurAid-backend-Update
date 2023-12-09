@@ -43,13 +43,13 @@ mongoose
   .catch((err) => console.log(err));
 mongoose.connection.on("error", handleDisconnect);
 
-app.get("/", (req, res) => {
-  res.end("Hello from server");
-});
-
 app.use("/api/auth", require("./app/routes/user_routes.js"));
 app.use("/api/blog", require("./app/routes/blog_routes.js"));
 app.use("/api/dose", require("./app/routes/dose_routes.js"));
+
+app.get("/", (req, res) => {
+  res.end("Hello from server");
+});
 
 app.listen(PORT, () => {
   console.log(`App running on http://localhost:${PORT}`);

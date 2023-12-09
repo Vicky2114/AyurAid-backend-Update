@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 const doseSchema = mongoose.Schema({
   duration: {
     type: Number,
-    unique: true,
     required: [true, "Duration is required"],
   },
   frequency: {

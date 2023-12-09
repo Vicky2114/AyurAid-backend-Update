@@ -2,44 +2,30 @@ const Dosage = require("../models/dose_model");
 
 // Add Dosage
 exports.addDosage = async (req, res) => {
-  try {
-    const duration = req.body.duration;
-    const frequency = req.body.frequency;
-    const description = req.body.description;
-    const timing = req.body.timing;
+  const duration = req.body.duration;
+  const frequency = req.body.frequency;
+  const description = req.body.description;
+  const timing = req.body.timing;
 
-    if (timing.length !== frequency) {
-      return res.status(400).json({ message: "Add timing for all frequency" });
-    }
-
-    const dosage = await Dosage.create({
-      duration: duration,
-      frequency: frequency,
-      description: description,
-      timing: timing,
-    });
-
-    if (!dosage) {
-      return res.status(401).json({
-        status: "fail",
-        message: "Failed to add dosage",
-        statusCode: 400,
-      });
-    }
-
-    return res.status(200).json({
-      status: "success",
-      message: "Dosage added successfully",
-      statusCode: 200,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      status: "error",
-      message: "Internal server error",
-      statusCode: 500,
-    });
+  if (timing.length !== frequency) {
+    return res.status(400).json({ message: "Add timing for all frequency" });
   }
+
+  const dosage = await Dosage.create({
+    duration: duration,
+    frequency: frequency,
+    description: description,
+    timing: timing,
+  });
+
+  return res.status(200).json({
+    status: "success",
+    message: "Dosage added successfully",
+    data: {
+      dosage,
+    },
+    statusCode: 200,
+  });
 };
 
 // Fetch SingleDose
@@ -93,11 +79,9 @@ exports.getAllDosages = async (req, res) => {
 exports.updateDosage = async (req, res) => {
   try {
     const dosageId = req.params.id;
-    const updatedDosage = req.body;
+    const { duration, frequency, description, timing } = req.body;
 
-    const dosage = await Dosage.findByIdAndUpdate(dosageId, updatedDosage, {
-      new: true,
-    });
+    let dosage = await Dosage.findById(dosageId);
 
     if (!dosage) {
       return res.status(404).json({
@@ -106,6 +90,16 @@ exports.updateDosage = async (req, res) => {
         statusCode: 404,
       });
     }
+
+    const data = {
+      duration: duration,
+      frequency: frequency,
+      description: description,
+      timing: timing,
+    };
+
+    await Dosage.findByIdAndUpdate(dosageId, { $set: data });
+    dosage = await Dosage.findById(dosageId);
 
     return res.status(200).json({
       status: "success",
