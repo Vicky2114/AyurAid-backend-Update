@@ -29,6 +29,10 @@ const blogSchema = mongoose.Schema({
   },
   comments: [
     {
+      commentId: {
+        type: String,
+        required: true,
+      },
       userImage: {
         type: String,
       },

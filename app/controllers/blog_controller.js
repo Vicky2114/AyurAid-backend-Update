@@ -23,14 +23,12 @@ exports.addBlog = async (req, res) => {
     " " +
     new Date().getFullYear();
   const { title, image, description, tag } = req.body;
-  console.log(req.user);
+
   const authorid = req.user._id;
   const author = await User.findById(authorid);
 
   const charCount = description.length;
   const readtime = charCount > 1000 ? charCount / 1000 : 1;
-
-  const imageBuffer = Buffer.from(image, "base64");
 
   const newBlog = await Blog.create({
     title: title,
@@ -39,7 +37,7 @@ exports.addBlog = async (req, res) => {
     authorName: author.username,
     image: image,
     description: description,
-    tag: tag,
+    tag: tag.toLowerCase(),
     readtime: readtime,
     publishDate: date,
   });
@@ -69,6 +67,15 @@ exports.blogById = async (req, res) => {
 
   const blog = await Blog.findById(id);
 
+  if (!blog) {
+    return res.status(400).json({
+      status: "fail",
+      data: {
+        message: "Not found",
+      },
+    });
+  }
+
   return res.status(201).json({
     status: "success",
     data: {
@@ -93,7 +100,7 @@ exports.blogs = async (req, res) => {
 exports.deleteBlog = async (req, res) => {
   const { id } = req.params;
 
-  await Blog.deleteById(id);
+  await Blog.deleteOne({ _id: id });
 
   return res.status(201).json({
     status: "success",
@@ -108,6 +115,15 @@ exports.likeBlog = async (req, res) => {
   const userId = req.user._id;
 
   const blog = await Blog.findById(id);
+
+  if (!blog) {
+    return res.status(400).json({
+      status: "fail",
+      data: {
+        message: "Not found",
+      },
+    });
+  }
 
   if (!blog.likes.includes(userId)) {
     await blog.updateOne({ $push: { likes: userId } });
@@ -133,6 +149,15 @@ exports.unlikeBlog = async (req, res) => {
 
   const blog = await Blog.findById(id);
 
+  if (!blog) {
+    return res.status(400).json({
+      status: "fail",
+      data: {
+        message: "Not found",
+      },
+    });
+  }
+
   if (blog.likes.includes(userId)) {
     await blog.updateOne({ $pull: { likes: userId } });
     return res.status(201).json({
@@ -155,26 +180,38 @@ exports.bookmark = async (req, res) => {
   const { id } = req.params;
   const userId = req.user._id;
 
-  const blog = await Blog.findById(id);
-  const user = await User.findById({ _id: userId });
+  const user = await User.findById(userId);
 
-  if (user) {
-    if (!user.bookmarks.includes(id)) {
-      await user.updateOne({ $push: { bookmarks: id } });
-      return res.status(201).json({
-        status: "success",
-        data: {
-          message: "Bookemarked",
-        },
-      });
-    } else {
-      return res.status(201).json({
-        status: "success",
-        data: {
-          message: "You already bookmarked it",
-        },
-      });
+  if (!user) {
+    return res.status(400).json({
+      status: "fail",
+      data: {
+        message: "User Not found",
+      },
+    });
+  }
+  let flag = 0;
+  const allBookmarks = await user.bookmarks;
+  allBookmarks.map((b) => {
+    if (b.blogId == id) {
+      flag = 1;
     }
+  });
+  if (!flag) {
+    await user.updateOne({ $push: { bookmarks: { blogId: id } } });
+    return res.status(201).json({
+      status: "success",
+      data: {
+        message: "Bookemarked",
+      },
+    });
+  } else {
+    return res.status(201).json({
+      status: "success",
+      data: {
+        message: "You already bookmarked it",
+      },
+    });
   }
 };
 
@@ -182,33 +219,46 @@ exports.unbookmark = async (req, res) => {
   const { id } = req.params;
   const userId = req.user._id;
 
-  const blog = await Blog.findById(id);
   const user = await User.findById({ _id: userId });
 
-  if (user) {
-    if (user.bookmarks.includes(id)) {
-      await user.updateOne({ $pull: { bookmarks: id } });
-      return res.status(201).json({
-        status: "success",
-        data: {
-          message: "Unbookemarked",
-        },
-      });
-    } else {
-      return res.status(201).json({
-        status: "success",
-        data: {
-          message: "You never bookmarked it",
-        },
-      });
+  if (!user) {
+    return res.status(400).json({
+      status: "fail",
+      data: {
+        message: "User Not found",
+      },
+    });
+  }
+
+  let flag = 0;
+  const allBookmarks = await user.bookmarks;
+  allBookmarks.map((b) => {
+    if (b.blogId == id) {
+      flag = 1;
     }
+  });
+  if (flag) {
+    await user.updateOne({ $pull: { bookmarks: { blogId: id } } });
+    return res.status(201).json({
+      status: "success",
+      data: {
+        message: "Unbookemarked",
+      },
+    });
+  } else {
+    return res.status(201).json({
+      status: "success",
+      data: {
+        message: "You never bookmarked it",
+      },
+    });
   }
 };
 
 exports.filterTag = async (req, res) => {
   const { tag } = req.params;
 
-  const blogs = Blog.findOne({ tag: tag });
+  const blogs = await Blog.find({ tag: tag.toLowerCase() });
 
   return res.status(201).json({
     status: "success",
@@ -219,9 +269,11 @@ exports.filterTag = async (req, res) => {
 };
 
 exports.searchTitle = async (req, res) => {
-  const { q } = req.query;
+  const { titleRec } = req.params;
 
-  const blogs = Blog.find({ title: { $regex: q, $options: "$i" } });
+  const blogs = await Blog.find({
+    title: { $regex: titleRec, $options: "i" },
+  });
 
   return res.status(201).json({
     status: "success",
@@ -250,6 +302,15 @@ exports.updateBlog = async (req, res) => {
 
   const blog = await Blog.findById(id);
 
+  if (!blog) {
+    return res.status(400).json({
+      status: "fail",
+      data: {
+        message: "Not found",
+      },
+    });
+  }
+
   const data = {
     title: title,
     image: image,
@@ -259,7 +320,6 @@ exports.updateBlog = async (req, res) => {
     publishDate: "Edited " + date,
   };
 
-  const blogs = Blog.findById(id);
   if (blog.authorid != req.user._id) {
     return res.status(400).json({
       status: "fail",
@@ -288,9 +348,18 @@ exports.addComment = async (req, res) => {
   const blog = await Blog.findById(id);
   const user = await User.findById(userId);
 
+  if (!blog) {
+    return res.status(400).json({
+      status: "fail",
+      data: {
+        message: "Blog Not found",
+      },
+    });
+  }
+
   await blog.updateOne({
     $push: {
-      comment: {
+      comments: {
         userId: user._id,
         username: user.username,
         userImage: user.profileImage,
@@ -311,10 +380,21 @@ exports.deleteComment = async (req, res) => {
   const { blogId, commentId } = req.params;
 
   const blog = await Blog.findById(blogId);
+
+  if (!blog) {
+    return res.status(400).json({
+      status: "fail",
+      data: {
+        message: "Not found",
+      },
+    });
+  }
   const allComments = blog.comments;
 
+  let flag = 0;
   allComments.map(async (c) => {
-    if (c._id == commentId && c.userId == req.user._id) {
+    if (c.userId == req.user._id && c._id == commentId) {
+      flag = 1;
       await blog.updateOne({ $pull: { comments: { _id: c._id } } });
       return res.status(201).json({
         status: "success",
@@ -325,10 +405,12 @@ exports.deleteComment = async (req, res) => {
     }
   });
 
-  return res.status(400).json({
-    status: "fail",
-    data: {
-      message: "Comment not deleted",
-    },
-  });
+  if (!flag) {
+    return res.status(400).json({
+      status: "fail",
+      data: {
+        message: "Comment not deleted",
+      },
+    });
+  }
 };

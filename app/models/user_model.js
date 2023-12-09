@@ -34,6 +34,13 @@ const userSchema = mongoose.Schema({
     required: [true, "Password is required"],
     select: false,
   },
+  bookmarks: [
+    {
+      blogId: {
+        type: String,
+      },
+    },
+  ],
   passwordResetToken: String,
   passwordResetExpires: Date,
   active: {
