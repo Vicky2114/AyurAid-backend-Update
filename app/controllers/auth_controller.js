@@ -47,6 +47,7 @@ exports.signup = async (req, res) => {
       status: "success",
       data: {
         user: user.username,
+        token: token,
       },
     });
   } catch (err) {

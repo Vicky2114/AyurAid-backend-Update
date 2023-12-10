@@ -6,6 +6,7 @@ dotenv.config({ path: "./.env" });
 const app = express();
 
 const PORT = process.env.PORT;
+
 const DB = process.env.MONGO_ATLAS.replace(
   "<password>",
   process.env.MONGO_PASSWORD

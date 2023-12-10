@@ -1,8 +1,17 @@
 const Dosage = require("../models/dose_model");
+const jwt = require("jsonwebtoken");
 
+const accessTokenSecret = process.env.USER_VERIFICATION_TOKEN_SECRET;
+
+const getUserIdFromRequest = (req) => {
+  const token = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, accessTokenSecret);
+  return decoded.id;
+};
 // Add Dosage
 exports.addDosage = async (req, res) => {
   try {
+    const userId = getUserIdFromRequest(req);
     const duration = req.body.duration;
     const frequency = req.body.frequency;
     const description = req.body.description;
@@ -13,6 +22,7 @@ exports.addDosage = async (req, res) => {
     }
 
     const dosage = await Dosage.create({
+      userId: userId,
       duration: duration,
       frequency: frequency,
       description: description,
@@ -45,13 +55,15 @@ exports.addDosage = async (req, res) => {
 // Fetch SingleDose
 exports.getDosageById = async (req, res) => {
   try {
+    const userId = getUserIdFromRequest(req);
     const dosageId = req.params.id;
-    const dosage = await Dosage.findById(dosageId);
+
+    const dosage = await Dosage.findOne({ _id: dosageId, userId: userId });
 
     if (!dosage) {
       return res.status(404).json({
         status: "fail",
-        message: "Dosage not found",
+        message: "Dosage not found or does not belong to the user",
         statusCode: 404,
       });
     }
@@ -71,10 +83,10 @@ exports.getDosageById = async (req, res) => {
 };
 
 // Fetch All Dosages
-
 exports.getAllDosages = async (req, res) => {
   try {
-    const dosages = await Dosage.find();
+    const userId = getUserIdFromRequest(req);
+    const dosages = await Dosage.find({ userId: userId });
     return res.status(200).json({
       status: "success",
       data: dosages,
@@ -92,17 +104,20 @@ exports.getAllDosages = async (req, res) => {
 // Update
 exports.updateDosage = async (req, res) => {
   try {
+    const userId = getUserIdFromRequest(req);
     const dosageId = req.params.id;
     const updatedDosage = req.body;
 
-    const dosage = await Dosage.findByIdAndUpdate(dosageId, updatedDosage, {
-      new: true,
-    });
+    const dosage = await Dosage.findOneAndUpdate(
+      { _id: dosageId, userId: userId },
+      updatedDosage,
+      { new: true }
+    );
 
     if (!dosage) {
       return res.status(404).json({
         status: "fail",
-        message: "Dosage not found",
+        message: "Dosage not found or does not belong to the user",
         statusCode: 404,
       });
     }
@@ -110,7 +125,7 @@ exports.updateDosage = async (req, res) => {
     return res.status(200).json({
       status: "success",
       message: "Dosage updated successfully",
-      data: dosage,
+      // data: dosage,
     });
   } catch (error) {
     console.error(error);
@@ -125,13 +140,18 @@ exports.updateDosage = async (req, res) => {
 // Delete
 exports.deleteDosage = async (req, res) => {
   try {
+    const userId = getUserIdFromRequest(req);
     const dosageId = req.params.id;
-    const dosage = await Dosage.findByIdAndDelete(dosageId);
+
+    const dosage = await Dosage.findOneAndDelete({
+      _id: dosageId,
+      userId: userId,
+    });
 
     if (!dosage) {
       return res.status(404).json({
         status: "fail",
-        message: "Dosage not found",
+        message: "Dosage not found or does not belong to the user",
         statusCode: 404,
       });
     }
@@ -139,7 +159,6 @@ exports.deleteDosage = async (req, res) => {
     return res.status(200).json({
       status: "success",
       message: "Dosage deleted successfully",
-      data: dosage,
     });
   } catch (error) {
     console.error(error);

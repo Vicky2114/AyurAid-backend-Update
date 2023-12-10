@@ -1,9 +1,12 @@
 const mongoose = require("mongoose");
 
 const doseSchema = mongoose.Schema({
+  userId: {
+    type: String,
+    required: [true, "User is required"],
+  },
   duration: {
     type: Number,
-    unique: true,
     required: [true, "Duration is required"],
   },
   frequency: {
