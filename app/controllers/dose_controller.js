@@ -1,7 +1,33 @@
+const jwt = require("jsonwebtoken");
 const Dosage = require("../models/dose_model");
+const { promisify } = require("util");
+const User = require("../models/user_model");
 
 // Add Dosage
 exports.addDosage = async (req, res) => {
+  let token;
+  if (req.get("Token")) {
+    token = req.get("Token");
+  }
+  if (!token) {
+    return res.status(401).json({
+      status: "fail",
+      message: "You are not loged in please login",
+    });
+  }
+
+  const decoded = await promisify(jwt.verify)(
+    token,
+    process.env.USER_VERIFICATION_TOKEN_SECRET
+  );
+  const currentUser = await User.findById(decoded.id);
+  if (!currentUser) {
+    return res.status(401).json({
+      status: "fail",
+      message: "No user exists",
+    });
+  }
+  const userId = decoded.id;
   const duration = req.body.duration;
   const frequency = req.body.frequency;
   const description = req.body.description;
@@ -12,6 +38,7 @@ exports.addDosage = async (req, res) => {
   }
 
   const dosage = await Dosage.create({
+    userId: userId,
     duration: duration,
     frequency: frequency,
     description: description,
@@ -42,6 +69,71 @@ exports.getDosageById = async (req, res) => {
       });
     }
 
+    let token;
+    if (req.get("Token")) {
+      token = req.get("Token");
+    }
+    if (!token) {
+      return res.status(401).json({
+        status: "fail",
+        message: "You are not loged in please login",
+      });
+    }
+
+    const decoded = await promisify(jwt.verify)(
+      token,
+      process.env.USER_VERIFICATION_TOKEN_SECRET
+    );
+
+    if (decoded.id != dosage.userId) {
+      return res.status(401).json({
+        status: "fail",
+        message: "You are not authorized to access this dose",
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      data: dosage,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+      statusCode: 500,
+    });
+  }
+};
+
+exports.getDosageOfLogedIn = async (req, res) => {
+  try {
+    let token;
+    if (req.get("Token")) {
+      token = req.get("Token");
+    }
+    if (!token) {
+      return res.status(401).json({
+        status: "fail",
+        message: "You are not loged in please login",
+      });
+    }
+
+    const decoded = await promisify(jwt.verify)(
+      token,
+      process.env.USER_VERIFICATION_TOKEN_SECRET
+    );
+
+    const dosage = await Dosage.findOne({ userId: decoded.id });
+
+    if (!dosage) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Dosage not found",
+        statusCode: 404,
+      });
+    }
+
     return res.status(200).json({
       status: "success",
       data: dosage,
@@ -57,7 +149,6 @@ exports.getDosageById = async (req, res) => {
 };
 
 // Fetch All Dosages
-
 exports.getAllDosages = async (req, res) => {
   try {
     const dosages = await Dosage.find();
@@ -88,6 +179,29 @@ exports.updateDosage = async (req, res) => {
         status: "fail",
         message: "Dosage not found",
         statusCode: 404,
+      });
+    }
+
+    let token;
+    if (req.get("Token")) {
+      token = req.get("Token");
+    }
+    if (!token) {
+      return res.status(401).json({
+        status: "fail",
+        message: "You are not loged in please login",
+      });
+    }
+
+    const decoded = await promisify(jwt.verify)(
+      token,
+      process.env.USER_VERIFICATION_TOKEN_SECRET
+    );
+
+    if (decoded.id != dosage.userId) {
+      return res.status(401).json({
+        status: "fail",
+        message: "You are not authorized to update this dose",
       });
     }
 
@@ -127,6 +241,29 @@ exports.deleteDosage = async (req, res) => {
         status: "fail",
         message: "Dosage not found",
         statusCode: 404,
+      });
+    }
+
+    let token;
+    if (req.get("Token")) {
+      token = req.get("Token");
+    }
+    if (!token) {
+      return res.status(401).json({
+        status: "fail",
+        message: "You are not loged in please login",
+      });
+    }
+
+    const decoded = await promisify(jwt.verify)(
+      token,
+      process.env.USER_VERIFICATION_TOKEN_SECRET
+    );
+
+    if (decoded.id != dosage.userId) {
+      return res.status(401).json({
+        status: "fail",
+        message: "You are not authorized to delete this dose",
       });
     }
 

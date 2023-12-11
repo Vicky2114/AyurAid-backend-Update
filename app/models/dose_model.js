@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 
 const doseSchema = mongoose.Schema({
+  userId: {
+    type: String,
+    required: true,
+  },
   duration: {
     type: Number,
     required: [true, "Duration is required"],
