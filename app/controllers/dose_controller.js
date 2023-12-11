@@ -234,7 +234,7 @@ exports.updateDosage = async (req, res) => {
 exports.deleteDosage = async (req, res) => {
   try {
     const dosageId = req.params.id;
-    const dosage = await Dosage.findByIdAndDelete(dosageId);
+    const dosage = await Dosage.findById(dosageId);
 
     if (!dosage) {
       return res.status(404).json({
