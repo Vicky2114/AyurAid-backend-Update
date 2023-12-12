@@ -13,4 +13,10 @@ router.delete(
   dose_controller.deleteDosage
 );
 
+router.put(
+  "/mark_dosage_slot",
+  authenticateJWT,
+  dose_controller.markDosageSlot
+);
+
 module.exports = router;

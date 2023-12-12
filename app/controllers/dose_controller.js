@@ -8,7 +8,9 @@ const getUserIdFromRequest = (req) => {
   const decoded = jwt.verify(token, accessTokenSecret);
   return decoded.id;
 };
-// Add Dosage
+
+//Add Dosage
+
 exports.addDosage = async (req, res) => {
   try {
     const userId = getUserIdFromRequest(req);
@@ -16,6 +18,8 @@ exports.addDosage = async (req, res) => {
     const frequency = req.body.frequency;
     const description = req.body.description;
     const timing = req.body.timing;
+    const slots = req.body.slots;
+    const title = req.body.title;
 
     if (timing.length !== frequency) {
       return res.status(400).json({ message: "Add timing for all frequency" });
@@ -27,6 +31,8 @@ exports.addDosage = async (req, res) => {
       frequency: frequency,
       description: description,
       timing: timing,
+      slots: slots,
+      title: title,
     });
 
     if (!dosage) {
@@ -159,6 +165,42 @@ exports.deleteDosage = async (req, res) => {
     return res.status(200).json({
       status: "success",
       message: "Dosage deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+      statusCode: 500,
+    });
+  }
+};
+
+// mark dosage slot
+
+exports.markDosageSlot = async (req, res) => {
+  try {
+    const userId = getUserIdFromRequest(req);
+    const { dosageID, slotID, isCompleted } = req.body;
+
+    const dosage = await Dosage.findOneAndUpdate(
+      { userId: userId, _id: dosageID, "slots.slotID": slotID },
+      { $set: { "slots.$.isCompleted": isCompleted } },
+      { new: true }
+    );
+
+    if (!dosage) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Dosage or slot not found",
+        statusCode: 404,
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      message: "Dosage slot marked as completed successfully",
+      data: dosage,
     });
   } catch (error) {
     console.error(error);
