@@ -18,7 +18,6 @@ exports.signup = async (req, res) => {
         message: "Email is already in use.",
       });
     }
-
     const user = await User.create({
       username: req.body.username,
       email: req.body.email,
@@ -26,6 +25,7 @@ exports.signup = async (req, res) => {
       fullName: req.body.fullName,
       dob: req.body.dob,
       country: req.body.country,
+      profileImage: req.body.profileImage,
     });
 
     const message = `Dear ${user.username},\n$Welcome to AyurAid!`;
@@ -42,12 +42,21 @@ exports.signup = async (req, res) => {
         expiresIn: process.env.JWT_EXPIRES_IN,
       }
     );
-    res.cookie("jwt", token, { httpOnly: false, secure: false });
+    res.cookie("jwt", token, {
+      httpOnly: false,
+      secure: false,
+      sameSite: "none",
+    });
     return res.status(201).json({
       status: "success",
       data: {
+<<<<<<< HEAD
         user: user.username,
         token: token,
+=======
+        user,
+        token,
+>>>>>>> 0dfcf3c3320df59a6b5792ebe9f8375e1a410158
       },
     });
   } catch (err) {
@@ -87,11 +96,20 @@ exports.login = async (req, res) => {
       }
     );
     req.user = user;
-    res.cookie("jwt", token, { httpOnly: false, secure: false });
+    res.cookie("jwt", token, {
+      httpOnly: false,
+      secure: false,
+      sameSite: "none",
+    });
     return res.status(201).json({
       status: "success",
       data: {
         user: user.username,
+        email: user.email,
+        id: user._id,
+        profileImage: user.profileImage,
+        fullname: user.fullName,
+        token: token,
       },
     });
   } catch (err) {
@@ -101,8 +119,8 @@ exports.login = async (req, res) => {
 
 exports.protect = async (req, res, next) => {
   let token;
-  if (req.headers.cookie) {
-    token = req.headers.cookie.split("jwt=")[1];
+  if (req.get("Token")) {
+    token = req.get("Token");
   }
 
   if (!token) {
@@ -217,10 +235,17 @@ exports.resetPassword = async (req, res, next) => {
     }
   );
   req.user = user;
-  res.cookie("jwt", token, { httpOnly: false, secure: false });
+  res.cookie("jwt", token, {
+    httpOnly: false,
+    secure: false,
+    sameSite: "none",
+  });
 
   return res.status(200).json({
     status: "success",
+    data: {
+      token,
+    },
     message: "Password has Changed",
     statusCode: 200,
   });

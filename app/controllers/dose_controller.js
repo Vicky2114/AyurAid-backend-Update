@@ -1,4 +1,6 @@
+const jwt = require("jsonwebtoken");
 const Dosage = require("../models/dose_model");
+<<<<<<< HEAD
 const jwt = require("jsonwebtoken");
 
 const accessTokenSecret = process.env.USER_VERIFICATION_TOKEN_SECRET;
@@ -10,8 +12,13 @@ const getUserIdFromRequest = (req) => {
 };
 
 //Add Dosage
+=======
+const { promisify } = require("util");
+const User = require("../models/user_model");
+>>>>>>> 0dfcf3c3320df59a6b5792ebe9f8375e1a410158
 
 exports.addDosage = async (req, res) => {
+<<<<<<< HEAD
   try {
     const userId = getUserIdFromRequest(req);
     const duration = req.body.duration;
@@ -33,20 +40,98 @@ exports.addDosage = async (req, res) => {
       timing: timing,
       slots: slots,
       title: title,
+=======
+  let token;
+  if (req.get("Token")) {
+    token = req.get("Token");
+  }
+  if (!token) {
+    return res.status(401).json({
+      status: "fail",
+      message: "You are not loged in please login",
+>>>>>>> 0dfcf3c3320df59a6b5792ebe9f8375e1a410158
     });
+  }
+
+  const decoded = await promisify(jwt.verify)(
+    token,
+    process.env.USER_VERIFICATION_TOKEN_SECRET
+  );
+  const currentUser = await User.findById(decoded.id);
+  if (!currentUser) {
+    return res.status(401).json({
+      status: "fail",
+      message: "No user exists",
+    });
+  }
+  const userId = decoded.id;
+  const duration = req.body.duration;
+  const frequency = req.body.frequency;
+  const description = req.body.description;
+  const timing = req.body.timing;
+
+  if (timing.length !== frequency) {
+    return res.status(400).json({ message: "Add timing for all frequency" });
+  }
+
+  const dosage = await Dosage.create({
+    userId: userId,
+    duration: duration,
+    frequency: frequency,
+    description: description,
+    timing: timing,
+  });
+
+  return res.status(200).json({
+    status: "success",
+    message: "Dosage added successfully",
+    data: {
+      dosage,
+    },
+    statusCode: 200,
+  });
+};
+
+// Fetch SingleDose
+exports.getDosageById = async (req, res) => {
+  try {
+    const dosageId = req.params.id;
+    const dosage = await Dosage.findById(dosageId);
 
     if (!dosage) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Dosage not found",
+        statusCode: 404,
+      });
+    }
+
+    let token;
+    if (req.get("Token")) {
+      token = req.get("Token");
+    }
+    if (!token) {
       return res.status(401).json({
         status: "fail",
-        message: "Failed to add dosage",
-        statusCode: 400,
+        message: "You are not loged in please login",
+      });
+    }
+
+    const decoded = await promisify(jwt.verify)(
+      token,
+      process.env.USER_VERIFICATION_TOKEN_SECRET
+    );
+
+    if (decoded.id != dosage.userId) {
+      return res.status(401).json({
+        status: "fail",
+        message: "You are not authorized to access this dose",
       });
     }
 
     return res.status(200).json({
       status: "success",
-      message: "Dosage added successfully",
-      statusCode: 200,
+      data: dosage,
     });
   } catch (error) {
     console.error(error);
@@ -58,13 +143,32 @@ exports.addDosage = async (req, res) => {
   }
 };
 
-// Fetch SingleDose
-exports.getDosageById = async (req, res) => {
+exports.getDosageOfLogedIn = async (req, res) => {
   try {
+<<<<<<< HEAD
     const userId = getUserIdFromRequest(req);
     const dosageId = req.params.id;
 
     const dosage = await Dosage.findOne({ _id: dosageId, userId: userId });
+=======
+    let token;
+    if (req.get("Token")) {
+      token = req.get("Token");
+    }
+    if (!token) {
+      return res.status(401).json({
+        status: "fail",
+        message: "You are not loged in please login",
+      });
+    }
+
+    const decoded = await promisify(jwt.verify)(
+      token,
+      process.env.USER_VERIFICATION_TOKEN_SECRET
+    );
+
+    const dosage = await Dosage.findOne({ userId: decoded.id });
+>>>>>>> 0dfcf3c3320df59a6b5792ebe9f8375e1a410158
 
     if (!dosage) {
       return res.status(404).json({
@@ -112,13 +216,17 @@ exports.updateDosage = async (req, res) => {
   try {
     const userId = getUserIdFromRequest(req);
     const dosageId = req.params.id;
-    const updatedDosage = req.body;
+    const { duration, frequency, description, timing } = req.body;
 
+<<<<<<< HEAD
     const dosage = await Dosage.findOneAndUpdate(
       { _id: dosageId, userId: userId },
       updatedDosage,
       { new: true }
     );
+=======
+    let dosage = await Dosage.findById(dosageId);
+>>>>>>> 0dfcf3c3320df59a6b5792ebe9f8375e1a410158
 
     if (!dosage) {
       return res.status(404).json({
@@ -127,6 +235,39 @@ exports.updateDosage = async (req, res) => {
         statusCode: 404,
       });
     }
+
+    let token;
+    if (req.get("Token")) {
+      token = req.get("Token");
+    }
+    if (!token) {
+      return res.status(401).json({
+        status: "fail",
+        message: "You are not loged in please login",
+      });
+    }
+
+    const decoded = await promisify(jwt.verify)(
+      token,
+      process.env.USER_VERIFICATION_TOKEN_SECRET
+    );
+
+    if (decoded.id != dosage.userId) {
+      return res.status(401).json({
+        status: "fail",
+        message: "You are not authorized to update this dose",
+      });
+    }
+
+    const data = {
+      duration: duration,
+      frequency: frequency,
+      description: description,
+      timing: timing,
+    };
+
+    await Dosage.findByIdAndUpdate(dosageId, { $set: data });
+    dosage = await Dosage.findById(dosageId);
 
     return res.status(200).json({
       status: "success",
@@ -148,11 +289,15 @@ exports.deleteDosage = async (req, res) => {
   try {
     const userId = getUserIdFromRequest(req);
     const dosageId = req.params.id;
+<<<<<<< HEAD
 
     const dosage = await Dosage.findOneAndDelete({
       _id: dosageId,
       userId: userId,
     });
+=======
+    const dosage = await Dosage.findById(dosageId);
+>>>>>>> 0dfcf3c3320df59a6b5792ebe9f8375e1a410158
 
     if (!dosage) {
       return res.status(404).json({
@@ -161,6 +306,31 @@ exports.deleteDosage = async (req, res) => {
         statusCode: 404,
       });
     }
+
+    let token;
+    if (req.get("Token")) {
+      token = req.get("Token");
+    }
+    if (!token) {
+      return res.status(401).json({
+        status: "fail",
+        message: "You are not loged in please login",
+      });
+    }
+
+    const decoded = await promisify(jwt.verify)(
+      token,
+      process.env.USER_VERIFICATION_TOKEN_SECRET
+    );
+
+    if (decoded.id != dosage.userId) {
+      return res.status(401).json({
+        status: "fail",
+        message: "You are not authorized to delete this dose",
+      });
+    }
+
+    Dosage.findByIdAndDelete(dosageId);
 
     return res.status(200).json({
       status: "success",
