@@ -52,11 +52,6 @@ exports.signup = async (req, res) => {
       data: {
         user: user.username,
         token: token,
-<<<<<<< HEAD
-        user,
-        token,
-=======
->>>>>>> b7382b4ce4c127541c42ed6d53eb6321210c4943
       },
     });
   } catch (err) {

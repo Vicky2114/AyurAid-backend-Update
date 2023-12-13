@@ -212,7 +212,7 @@ exports.markDosageSlot = async (req, res) => {
     const { dosageID, slotID, isCompleted } = req.body;
 
     const dosage = await Dosage.findOneAndUpdate(
-      { userId: userId, _id: dosageID, "slots.slotID": slotID },
+      { userId: userId, _id: dosageID, "slots._id": slotID },
       { $set: { "slots.$.isCompleted": isCompleted } },
       { new: true }
     );
