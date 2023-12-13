@@ -61,6 +61,16 @@ exports.allBlogs = async (req, res) => {
     },
   });
 };
+exports.userInfo = async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  return res.status(201).json({
+    status: "success",
+    data: {
+      user,
+    },
+  });
+};
 
 exports.blogById = async (req, res) => {
   const { id } = req.params;
