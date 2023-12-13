@@ -50,8 +50,8 @@ exports.signup = async (req, res) => {
     return res.status(201).json({
       status: "success",
       data: {
-        user,
-        token,
+        user: user.username,
+        token: token,
       },
     });
   } catch (err) {

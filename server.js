@@ -17,6 +17,7 @@ app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));
 
 const PORT = process.env.PORT;
+
 const DB = process.env.MONGO_ATLAS.replace(
   "<password>",
   process.env.MONGO_PASSWORD

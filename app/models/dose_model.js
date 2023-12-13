@@ -1,27 +1,51 @@
 const mongoose = require("mongoose");
 
-const doseSchema = mongoose.Schema({
+const dosageSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true,
   },
   duration: {
     type: Number,
-    required: [true, "Duration is required"],
+    required: true,
   },
   frequency: {
     type: Number,
-    required: [true, "Frequency is required"],
+    required: true,
   },
   description: {
     type: String,
-    required: [true, "Description is required"],
+    required: true,
   },
   timing: {
     type: [String],
-    required: [true, "Timing is required"],
+    required: true,
   },
+  title: {
+    type: String,
+    required: true,
+  },
+  slots: [
+    {
+      title: {
+        type: String,
+        required: true,
+      },
+      subTitle: {
+        type: String,
+      },
+      isCompleted: {
+        type: Boolean,
+        default: false,
+      },
+      slotID: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
 });
 
-const Dosage = mongoose.model("Dosage", doseSchema);
+const Dosage = mongoose.model("Dosage", dosageSchema);
+
 module.exports = Dosage;
