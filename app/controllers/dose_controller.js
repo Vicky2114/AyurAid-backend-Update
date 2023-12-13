@@ -1,10 +1,6 @@
 const jwt = require("jsonwebtoken");
 const Dosage = require("../models/dose_model");
-<<<<<<< HEAD
-const jwt = require("jsonwebtoken");
-
 const accessTokenSecret = process.env.USER_VERIFICATION_TOKEN_SECRET;
-
 const getUserIdFromRequest = (req) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, accessTokenSecret);
@@ -12,13 +8,8 @@ const getUserIdFromRequest = (req) => {
 };
 
 //Add Dosage
-=======
-const { promisify } = require("util");
-const User = require("../models/user_model");
->>>>>>> 0dfcf3c3320df59a6b5792ebe9f8375e1a410158
 
 exports.addDosage = async (req, res) => {
-<<<<<<< HEAD
   try {
     const userId = getUserIdFromRequest(req);
     const duration = req.body.duration;
@@ -40,16 +31,13 @@ exports.addDosage = async (req, res) => {
       timing: timing,
       slots: slots,
       title: title,
-=======
-  let token;
-  if (req.get("Token")) {
-    token = req.get("Token");
-  }
-  if (!token) {
-    return res.status(401).json({
-      status: "fail",
-      message: "You are not loged in please login",
->>>>>>> 0dfcf3c3320df59a6b5792ebe9f8375e1a410158
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+      statusCode: 500,
     });
   }
 
@@ -145,30 +133,10 @@ exports.getDosageById = async (req, res) => {
 
 exports.getDosageOfLogedIn = async (req, res) => {
   try {
-<<<<<<< HEAD
     const userId = getUserIdFromRequest(req);
     const dosageId = req.params.id;
 
     const dosage = await Dosage.findOne({ _id: dosageId, userId: userId });
-=======
-    let token;
-    if (req.get("Token")) {
-      token = req.get("Token");
-    }
-    if (!token) {
-      return res.status(401).json({
-        status: "fail",
-        message: "You are not loged in please login",
-      });
-    }
-
-    const decoded = await promisify(jwt.verify)(
-      token,
-      process.env.USER_VERIFICATION_TOKEN_SECRET
-    );
-
-    const dosage = await Dosage.findOne({ userId: decoded.id });
->>>>>>> 0dfcf3c3320df59a6b5792ebe9f8375e1a410158
 
     if (!dosage) {
       return res.status(404).json({
@@ -218,15 +186,11 @@ exports.updateDosage = async (req, res) => {
     const dosageId = req.params.id;
     const { duration, frequency, description, timing } = req.body;
 
-<<<<<<< HEAD
     const dosage = await Dosage.findOneAndUpdate(
       { _id: dosageId, userId: userId },
       updatedDosage,
       { new: true }
     );
-=======
-    let dosage = await Dosage.findById(dosageId);
->>>>>>> 0dfcf3c3320df59a6b5792ebe9f8375e1a410158
 
     if (!dosage) {
       return res.status(404).json({
@@ -289,15 +253,11 @@ exports.deleteDosage = async (req, res) => {
   try {
     const userId = getUserIdFromRequest(req);
     const dosageId = req.params.id;
-<<<<<<< HEAD
 
     const dosage = await Dosage.findOneAndDelete({
       _id: dosageId,
       userId: userId,
     });
-=======
-    const dosage = await Dosage.findById(dosageId);
->>>>>>> 0dfcf3c3320df59a6b5792ebe9f8375e1a410158
 
     if (!dosage) {
       return res.status(404).json({

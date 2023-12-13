@@ -50,13 +50,10 @@ exports.signup = async (req, res) => {
     return res.status(201).json({
       status: "success",
       data: {
-<<<<<<< HEAD
         user: user.username,
         token: token,
-=======
         user,
         token,
->>>>>>> 0dfcf3c3320df59a6b5792ebe9f8375e1a410158
       },
     });
   } catch (err) {
