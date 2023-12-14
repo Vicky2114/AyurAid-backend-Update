@@ -2,7 +2,6 @@ const Dosage = require("../models/dose_model");
 const jwt = require("jsonwebtoken");
 
 const accessTokenSecret = process.env.USER_VERIFICATION_TOKEN_SECRET;
-
 const getUserIdFromRequest = (req) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, accessTokenSecret);
@@ -213,7 +212,7 @@ exports.markDosageSlot = async (req, res) => {
     const { dosageID, slotID, isCompleted } = req.body;
 
     const dosage = await Dosage.findOneAndUpdate(
-      { userId: userId, _id: dosageID, "slots.slotID": slotID },
+      { userId: userId, _id: dosageID, "slots._id": slotID },
       { $set: { "slots.$.isCompleted": isCompleted } },
       { new: true }
     );
