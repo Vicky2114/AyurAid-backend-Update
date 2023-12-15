@@ -54,9 +54,13 @@ mongoose
   .catch((err) => console.log(err));
 mongoose.connection.on("error", handleDisconnect);
 
-app.use("/api/auth", require("./app/routes/user_routes.js"));
+app.use("/api/wakeUp", (req, res) => {
+  res.status(200).json({ data: { message: "Hello from server" } });
+});
+app.use("/api/auth", require("./app/routes/auth_routes.js"));
 app.use("/api/blog", require("./app/routes/blog_routes.js"));
 app.use("/api/dose", require("./app/routes/dose_routes.js"));
+app.use("/api/user", require("./app/routes/user_routes.js"));
 
 app.get("/", (req, res) => {
   res.end("Hello from server");

@@ -1,5 +1,6 @@
 const User = require("../models/user_model");
 const Blog = require("../models/blog_model");
+const translate = require("translate-google");
 const monthNames = [
   "Jan",
   "Feb",
@@ -16,411 +17,549 @@ const monthNames = [
 ];
 
 exports.addBlog = async (req, res) => {
-  const date =
-    new Date().getDate() +
-    " " +
-    monthNames[new Date().getMonth()] +
-    " " +
-    new Date().getFullYear();
-  const { title, image, description, tag } = req.body;
+  try {
+    const date =
+      new Date().getDate() +
+      " " +
+      monthNames[new Date().getMonth()] +
+      " " +
+      new Date().getFullYear();
+    const { title, image, description, tag } = req.body;
 
-  const authorid = req.user._id;
-  const author = await User.findById(authorid);
+    const authorid = req.user._id;
+    const author = await User.findById(authorid);
 
-  const charCount = description.length;
-  const readtime = charCount > 1000 ? charCount / 1000 : 1;
+    const charCount = description.length;
+    const readtime = charCount > 1000 ? charCount / 1000 : 1;
 
-  const newBlog = await Blog.create({
-    title: title,
-    authorid: authorid,
-    authorImage: author.profileImage,
-    authorName: author.username,
-    image: image,
-    description: description,
-    tag: tag.toLowerCase(),
-    readtime: readtime,
-    publishDate: date,
-  });
+    const newBlog = await Blog.create({
+      title: title,
+      authorid: authorid,
+      authorImage: author.profileImage,
+      authorName: author.username,
+      image: image,
+      description: description,
+      tag: tag.toLowerCase(),
+      readtime: readtime,
+      publishDate: date,
+    });
 
-  return res.status(200).json({
-    status: "success",
-    data: {
-      title: newBlog.title,
-      id: newBlog._id,
-    },
-  });
+    return res.status(200).json({
+      status: "success",
+      data: {
+        title: newBlog.title,
+        id: newBlog._id,
+      },
+    });
+  } catch (err) {
+    return res.status(500).send(err);
+  }
 };
 
 exports.allBlogs = async (req, res) => {
-  const allBlogs = await Blog.find({}).sort({ likes: -1, updatedAt: 1 });
+  try {
+    let allBlogs = await Blog.find({}).sort({
+      likes: -1,
+      updatedAt: 1,
+    });
 
-  return res.status(201).json({
-    status: "success",
-    data: {
-      allBlogs,
-    },
-  });
+    let promises;
+    if (req.get("Lang")) {
+      let lang = req.get("Lang");
+      promises = allBlogs.map(async (e) => {
+        const titleData = await translate(e.title, { to: lang });
+        const descriptionData = await translate(e.description, { to: lang });
+        e.title = titleData;
+        e.description = descriptionData;
+      });
+    }
+
+    Promise.all(promises)
+      .then(() => {
+        return res.status(201).json({
+          status: "success",
+          data: {
+            allBlogs,
+          },
+        });
+      })
+      .catch((err) => {});
+  } catch (err) {
+    return res.status(500).send(err);
+  }
 };
-exports.userInfo = async (req, res) => {
-  const user = await User.findById(req.user._id);
 
-  return res.status(201).json({
-    status: "success",
-    data: {
-      user,
-    },
-  });
+exports.userInfo = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    return res.status(201).json({
+      status: "success",
+      data: {
+        user,
+      },
+    });
+  } catch (err) {
+    return res.status(500).send(err);
+  }
 };
 
 exports.blogById = async (req, res) => {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-  const blog = await Blog.findById(id);
+    const blog = await Blog.findById(id);
 
-  if (!blog) {
-    return res.status(400).json({
-      status: "fail",
-      data: {
-        message: "Not found",
-      },
-    });
+    if (!blog) {
+      return res.status(400).json({
+        status: "fail",
+        data: {
+          message: "Not found",
+        },
+      });
+    }
+
+    if (req.get("Lang")) {
+      let lang = req.get("Lang");
+      const titleData = await translate(blog.title, { to: lang });
+      const descriptionData = await translate(blog.description, { to: lang });
+      blog.title = titleData;
+      blog.description = descriptionData;
+
+      return res.status(201).json({
+        status: "success",
+        data: {
+          blog,
+        },
+      });
+    }
+  } catch (err) {
+    return res.status(500).send(err);
   }
-
-  return res.status(201).json({
-    status: "success",
-    data: {
-      blog,
-    },
-  });
 };
 
 exports.blogs = async (req, res) => {
-  const authorid = req.user._id;
+  try {
+    const authorid = req.user._id;
 
-  const blogs = await Blog.find({ authorid: authorid });
+    const blogs = await Blog.find({ authorid: authorid });
 
-  return res.status(201).json({
-    status: "success",
-    data: {
-      blogs,
-    },
-  });
+    let promises;
+    if (req.get("Lang")) {
+      let lang = req.get("Lang");
+      promises = blogs.map(async (e) => {
+        const titleData = await translate(e.title, { to: lang });
+        const descriptionData = await translate(e.description, { to: lang });
+        e.title = titleData;
+        e.description = descriptionData;
+      });
+    }
+
+    Promise.all(promises)
+      .then(() => {
+        return res.status(201).json({
+          status: "success",
+          data: {
+            blogs,
+          },
+        });
+      })
+      .catch((err) => {
+        throw err;
+      });
+  } catch (err) {
+    return res.status(500).send(err);
+  }
 };
 
 exports.deleteBlog = async (req, res) => {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-  await Blog.deleteOne({ _id: id });
+    await Blog.deleteOne({ _id: id });
 
-  return res.status(201).json({
-    status: "success",
-    data: {
-      message: "Blog Deleted",
-    },
-  });
+    return res.status(201).json({
+      status: "success",
+      data: {
+        message: "Blog Deleted",
+      },
+    });
+  } catch (err) {
+    return res.status(500).send(err);
+  }
 };
 
 exports.likeBlog = async (req, res) => {
-  const { id } = req.params;
-  const userId = req.user._id;
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
 
-  const blog = await Blog.findById(id);
+    const blog = await Blog.findById(id);
 
-  if (!blog) {
-    return res.status(400).json({
-      status: "fail",
-      data: {
-        message: "Not found",
-      },
-    });
-  }
+    if (!blog) {
+      return res.status(400).json({
+        status: "fail",
+        data: {
+          message: "Not found",
+        },
+      });
+    }
 
-  if (!blog.likes.includes(userId)) {
-    await blog.updateOne({ $push: { likes: userId } });
-    return res.status(201).json({
-      status: "success",
-      data: {
-        message: "Liked",
-      },
-    });
-  } else {
-    return res.status(201).json({
-      status: "success",
-      data: {
-        message: "Already Liked",
-      },
-    });
+    if (!blog.likes.includes(userId)) {
+      await blog.updateOne({ $push: { likes: userId } });
+      return res.status(201).json({
+        status: "success",
+        data: {
+          message: "Liked",
+        },
+      });
+    } else {
+      return res.status(201).json({
+        status: "success",
+        data: {
+          message: "Already Liked",
+        },
+      });
+    }
+  } catch (err) {
+    return res.status(500).send(err);
   }
 };
 
 exports.unlikeBlog = async (req, res) => {
-  const { id } = req.params;
-  const userId = req.user._id;
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
 
-  const blog = await Blog.findById(id);
+    const blog = await Blog.findById(id);
 
-  if (!blog) {
-    return res.status(400).json({
-      status: "fail",
-      data: {
-        message: "Not found",
-      },
-    });
-  }
+    if (!blog) {
+      return res.status(400).json({
+        status: "fail",
+        data: {
+          message: "Not found",
+        },
+      });
+    }
 
-  if (blog.likes.includes(userId)) {
-    await blog.updateOne({ $pull: { likes: userId } });
-    return res.status(201).json({
-      status: "success",
-      data: {
-        message: "Unliked",
-      },
-    });
-  } else {
-    return res.status(201).json({
-      status: "success",
-      data: {
-        message: "You never liked it",
-      },
-    });
+    if (blog.likes.includes(userId)) {
+      await blog.updateOne({ $pull: { likes: userId } });
+      return res.status(201).json({
+        status: "success",
+        data: {
+          message: "Unliked",
+        },
+      });
+    } else {
+      return res.status(201).json({
+        status: "success",
+        data: {
+          message: "You never liked it",
+        },
+      });
+    }
+  } catch (err) {
+    return res.status(500).send(err);
   }
 };
 
 exports.bookmark = async (req, res) => {
-  const { id } = req.params;
-  const userId = req.user._id;
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
 
-  const user = await User.findById(userId);
+    const user = await User.findById(userId);
 
-  if (!user) {
-    return res.status(400).json({
-      status: "fail",
-      data: {
-        message: "User Not found",
-      },
-    });
-  }
-  let flag = 0;
-  const allBookmarks = await user.bookmarks;
-  allBookmarks.map((b) => {
-    if (b.blogId == id) {
-      flag = 1;
+    if (!user) {
+      return res.status(400).json({
+        status: "fail",
+        data: {
+          message: "User Not found",
+        },
+      });
     }
-  });
-  if (!flag) {
-    await user.updateOne({ $push: { bookmarks: { blogId: id } } });
-    return res.status(201).json({
-      status: "success",
-      data: {
-        message: "Bookemarked",
-      },
+    let flag = 0;
+    const allBookmarks = await user.bookmarks;
+    allBookmarks.map((b) => {
+      if (b.blogId == id) {
+        flag = 1;
+      }
     });
-  } else {
-    return res.status(201).json({
-      status: "success",
-      data: {
-        message: "You already bookmarked it",
-      },
-    });
+    if (!flag) {
+      await user.updateOne({ $push: { bookmarks: { blogId: id } } });
+      return res.status(201).json({
+        status: "success",
+        data: {
+          message: "Bookemarked",
+        },
+      });
+    } else {
+      return res.status(201).json({
+        status: "success",
+        data: {
+          message: "You already bookmarked it",
+        },
+      });
+    }
+  } catch (err) {
+    return res.status(500).send(err);
   }
 };
 
 exports.unbookmark = async (req, res) => {
-  const { id } = req.params;
-  const userId = req.user._id;
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
 
-  const user = await User.findById({ _id: userId });
+    const user = await User.findById({ _id: userId });
 
-  if (!user) {
-    return res.status(400).json({
-      status: "fail",
-      data: {
-        message: "User Not found",
-      },
-    });
-  }
-
-  let flag = 0;
-  const allBookmarks = await user.bookmarks;
-  allBookmarks.map((b) => {
-    if (b.blogId == id) {
-      flag = 1;
+    if (!user) {
+      return res.status(400).json({
+        status: "fail",
+        data: {
+          message: "User Not found",
+        },
+      });
     }
-  });
-  if (flag) {
-    await user.updateOne({ $pull: { bookmarks: { blogId: id } } });
-    return res.status(201).json({
-      status: "success",
-      data: {
-        message: "Unbookemarked",
-      },
+
+    let flag = 0;
+    const allBookmarks = await user.bookmarks;
+    allBookmarks.map((b) => {
+      if (b.blogId == id) {
+        flag = 1;
+      }
     });
-  } else {
-    return res.status(201).json({
-      status: "success",
-      data: {
-        message: "You never bookmarked it",
-      },
-    });
+    if (flag) {
+      await user.updateOne({ $pull: { bookmarks: { blogId: id } } });
+      return res.status(201).json({
+        status: "success",
+        data: {
+          message: "Unbookemarked",
+        },
+      });
+    } else {
+      return res.status(201).json({
+        status: "success",
+        data: {
+          message: "You never bookmarked it",
+        },
+      });
+    }
+  } catch (err) {
+    return res.status(500).send(err);
   }
 };
 
 exports.filterTag = async (req, res) => {
-  const { tag } = req.params;
+  try {
+    const { tag } = req.params;
 
-  const blogs = await Blog.find({ tag: tag.toLowerCase() });
+    const blogs = await Blog.find({ tag: tag.toLowerCase() });
 
-  return res.status(201).json({
-    status: "success",
-    data: {
-      blogs,
-    },
-  });
+    let promises;
+    if (req.get("Lang")) {
+      let lang = req.get("Lang");
+      promises = blogs.map(async (e) => {
+        const titleData = await translate(e.title, { to: lang });
+        const descriptionData = await translate(e.description, { to: lang });
+        e.title = titleData;
+        e.description = descriptionData;
+      });
+    }
+
+    Promise.all(promises)
+      .then(() => {
+        return res.status(201).json({
+          status: "success",
+          data: {
+            blogs,
+          },
+        });
+      })
+      .catch((err) => {
+        throw err;
+      });
+  } catch (err) {
+    return res.status(500).send(err);
+  }
 };
 
 exports.searchTitle = async (req, res) => {
-  const { titleRec } = req.params;
+  try {
+    const { titleRec } = req.body;
 
-  const blogs = await Blog.find({
-    title: { $regex: titleRec, $options: "i" },
-  });
+    const blogs = await Blog.find({
+      title: { $regex: titleRec, $options: "i" },
+    });
 
-  return res.status(201).json({
-    status: "success",
-    data: {
-      blogs,
-    },
-  });
+    let promises;
+    if (req.get("Lang")) {
+      let lang = req.get("Lang");
+      promises = blogs.map(async (e) => {
+        const titleData = await translate(e.title, { to: lang });
+        const descriptionData = await translate(e.description, { to: lang });
+        e.title = titleData;
+        e.description = descriptionData;
+      });
+    }
+
+    Promise.all(promises)
+      .then(() => {
+        return res.status(201).json({
+          status: "success",
+          data: {
+            blogs,
+          },
+        });
+      })
+      .catch((err) => {
+        throw err;
+      });
+  } catch (err) {
+    return res.status(500).send(err);
+  }
 };
 
 exports.updateBlog = async (req, res) => {
-  const { id } = req.params;
-  const date =
-    new Date().getDate() +
-    " " +
-    monthNames[new Date().getMonth() + 1] +
-    " " +
-    new Date().getFullYear();
-  const { title, image, description, category } = req.body;
+  try {
+    const { id } = req.params;
+    const date =
+      new Date().getDate() +
+      " " +
+      monthNames[new Date().getMonth() + 1] +
+      " " +
+      new Date().getFullYear();
+    const { title, image, description, category } = req.body;
 
-  let charCount;
-  let readtime;
-  if (description) {
-    charCount = description.length;
-    readtime = charCount > 1000 ? charCount / 1000 : 1;
-  }
+    let charCount;
+    let readtime;
+    if (description) {
+      charCount = description.length;
+      readtime = charCount > 1000 ? charCount / 1000 : 1;
+    }
 
-  const blog = await Blog.findById(id);
+    const blog = await Blog.findById(id);
 
-  if (!blog) {
-    return res.status(400).json({
-      status: "fail",
-      data: {
-        message: "Not found",
-      },
-    });
-  }
-
-  const data = {
-    title: title,
-    image: image,
-    description: description,
-    category: category,
-    readtime: readtime,
-    publishDate: "Edited " + date,
-  };
-
-  if (blog.authorid != req.user._id) {
-    return res.status(400).json({
-      status: "fail",
-      data: {
-        message: "Not authorized",
-      },
-    });
-  }
-
-  await Blog.findByIdAndUpdate(id, { $set: data });
-
-  return res.status(201).json({
-    status: "success",
-    data: {
-      blogId: blog._id,
-      title: data.title,
-    },
-  });
-};
-
-exports.addComment = async (req, res) => {
-  const { id } = req.params;
-  const userId = req.user._id;
-  const { commentText } = req.body;
-
-  const blog = await Blog.findById(id);
-  const user = await User.findById(userId);
-
-  if (!blog) {
-    return res.status(400).json({
-      status: "fail",
-      data: {
-        message: "Blog Not found",
-      },
-    });
-  }
-
-  await blog.updateOne({
-    $push: {
-      comments: {
-        userId: user._id,
-        username: user.username,
-        userImage: user.profileImage,
-        commentText: commentText,
-      },
-    },
-  });
-
-  return res.status(201).json({
-    status: "success",
-    data: {
-      message: "Comment added",
-    },
-  });
-};
-
-exports.deleteComment = async (req, res) => {
-  const { blogId, commentId } = req.params;
-
-  const blog = await Blog.findById(blogId);
-
-  if (!blog) {
-    return res.status(400).json({
-      status: "fail",
-      data: {
-        message: "Not found",
-      },
-    });
-  }
-  const allComments = blog.comments;
-
-  let flag = 0;
-  allComments.map(async (c) => {
-    if (c.userId == req.user._id && c._id == commentId) {
-      flag = 1;
-      await blog.updateOne({ $pull: { comments: { _id: c._id } } });
-      return res.status(201).json({
-        status: "success",
+    if (!blog) {
+      return res.status(400).json({
+        status: "fail",
         data: {
-          message: "Comment deleted",
+          message: "Not found",
         },
       });
     }
-  });
 
-  if (!flag) {
-    return res.status(400).json({
-      status: "fail",
+    const data = {
+      title: title,
+      image: image,
+      description: description,
+      category: category,
+      readtime: readtime,
+      publishDate: "Edited " + date,
+    };
+
+    if (blog.authorid != req.user._id) {
+      return res.status(400).json({
+        status: "fail",
+        data: {
+          message: "Not authorized",
+        },
+      });
+    }
+
+    await Blog.findByIdAndUpdate(id, { $set: data });
+
+    return res.status(201).json({
+      status: "success",
       data: {
-        message: "Comment not deleted",
+        blogId: blog._id,
+        title: data.title,
       },
     });
+  } catch (err) {
+    return res.status(500).send(err);
+  }
+};
+
+exports.addComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+    const { commentText } = req.body;
+
+    const blog = await Blog.findById(id);
+    const user = await User.findById(userId);
+
+    if (!blog) {
+      return res.status(400).json({
+        status: "fail",
+        data: {
+          message: "Blog Not found",
+        },
+      });
+    }
+
+    await blog.updateOne({
+      $push: {
+        comments: {
+          userId: user._id,
+          username: user.username,
+          userImage: user.profileImage,
+          commentText: commentText,
+        },
+      },
+    });
+
+    return res.status(201).json({
+      status: "success",
+      data: {
+        message: "Comment added",
+      },
+    });
+  } catch (err) {
+    return res.status(500).send(err);
+  }
+};
+
+exports.deleteComment = async (req, res) => {
+  try {
+    const { blogId, commentId } = req.params;
+
+    const blog = await Blog.findById(blogId);
+
+    if (!blog) {
+      return res.status(400).json({
+        status: "fail",
+        data: {
+          message: "Not found",
+        },
+      });
+    }
+    const allComments = blog.comments;
+
+    let flag = 0;
+    allComments.map(async (c) => {
+      if (c.userId == req.user._id && c._id == commentId) {
+        flag = 1;
+        await blog.updateOne({ $pull: { comments: { _id: c._id } } });
+        return res.status(201).json({
+          status: "success",
+          data: {
+            message: "Comment deleted",
+          },
+        });
+      }
+    });
+
+    if (!flag) {
+      return res.status(400).json({
+        status: "fail",
+        data: {
+          message: "Comment not deleted",
+        },
+      });
+    }
+  } catch (err) {
+    return res.status(500).send(err);
   }
 };

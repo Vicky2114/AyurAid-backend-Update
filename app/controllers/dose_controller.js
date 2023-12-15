@@ -1,51 +1,44 @@
 const Dosage = require("../models/dose_model");
-const jwt = require("jsonwebtoken");
-
-const accessTokenSecret = process.env.USER_VERIFICATION_TOKEN_SECRET;
-
-const getUserIdFromRequest = (req) => {
-  const token = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(token, accessTokenSecret);
-  return decoded.id;
-};
-
-//Add Dosage
 
 exports.addDosage = async (req, res) => {
-  const userId = req.user._id;
+  try {
+    const userId = req.user._id;
 
-  const duration = req.body.duration;
-  const frequency = req.body.frequency;
-  const description = req.body.description;
-  const timing = req.body.timing;
-  const slots = req.body.slots;
-  const title = req.body.title;
+    const duration = req.body.duration;
+    const frequency = req.body.frequency;
+    const description = req.body.description;
+    const timing = req.body.timing;
+    const slots = req.body.slots;
+    const title = req.body.title;
 
-  if (timing.length !== frequency) {
-    return res.status(400).json({ message: "Add timing for all frequency" });
+    if (timing.length !== frequency) {
+      return res.status(400).json({ message: "Add timing for all frequency" });
+    }
+
+    if (timing.length !== frequency) {
+      return res.status(400).json({ message: "Add timing for all frequency" });
+    }
+    const dosage = await Dosage.create({
+      userId: userId,
+      duration: duration,
+      frequency: frequency,
+      description: description,
+      timing: timing,
+      slots: slots,
+      title: title,
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: "Dosage added successfully",
+      data: {
+        dosage,
+      },
+      statusCode: 200,
+    });
+  } catch (err) {
+    return res.status(500).send(err);
   }
-
-  if (timing.length !== frequency) {
-    return res.status(400).json({ message: "Add timing for all frequency" });
-  }
-  const dosage = await Dosage.create({
-    userId: userId,
-    duration: duration,
-    frequency: frequency,
-    description: description,
-    timing: timing,
-    slots: slots,
-    title: title,
-  });
-
-  return res.status(200).json({
-    status: "success",
-    message: "Dosage added successfully",
-    data: {
-      dosage,
-    },
-    statusCode: 200,
-  });
 };
 
 // Fetch SingleDose
@@ -76,7 +69,6 @@ exports.getDosageById = async (req, res) => {
       data: dosage,
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       status: "error",
       message: "Internal server error",
@@ -105,7 +97,6 @@ exports.getDosageOfLogedIn = async (req, res) => {
       data: dosage,
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       status: "error",
       message: "Internal server error",
@@ -123,7 +114,6 @@ exports.getAllDosages = async (req, res) => {
       data: dosages,
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       status: "error",
       message: "Internal server error",
@@ -155,7 +145,6 @@ exports.updateDosage = async (req, res) => {
       // data: dosage,
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       status: "error",
       message: "Internal server error",
@@ -196,7 +185,6 @@ exports.deleteDosage = async (req, res) => {
       message: "Dosage deleted successfully",
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       status: "error",
       message: "Internal server error",
@@ -232,7 +220,6 @@ exports.markDosageSlot = async (req, res) => {
       data: dosage,
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       status: "error",
       message: "Internal server error",
