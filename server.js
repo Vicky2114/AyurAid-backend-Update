@@ -8,7 +8,7 @@ const cookieParser = require("cookie-parser");
 const app = express();
 app.use(
   cors({
-    origin: "https://ayur-aid-web.vercel.app",
+    origin: ["https://ayur-aid-web.vercel.app", "http://localhost:3000"],
     credentials: true,
     exposedHeaders: ["set-cookie"],
   })
