@@ -73,7 +73,7 @@ exports.getDosageOfLogedIn = async (req, res) => {
     const userId = req.user._id;
     const dosageId = req.params.id;
 
-    const dosages = await Dosage.find({ _id: dosageId, userId: userId });
+    const dosages = await Dosage.find({ userId: userId });
 
     if (!dosages) {
       return res.status(404).json({
