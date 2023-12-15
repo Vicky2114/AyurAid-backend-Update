@@ -77,12 +77,12 @@ exports.getDosageById = async (req, res) => {
   }
 };
 
-exports.getDosageById = async (req, res) => {
+exports.getDosageOfLogedIn = async (req, res) => {
   try {
+    const userId = req.user._id;
     const dosageId = req.params.id;
-    console.log(dosageId);
 
-    const dosages = await Dosage.find({ _id: dosageId });
+    const dosages = await Dosage.find({ _id: dosageId, userId: userId });
 
     if (!dosages) {
       return res.status(404).json({
