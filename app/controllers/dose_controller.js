@@ -82,9 +82,9 @@ exports.getDosageOfLogedIn = async (req, res) => {
     const userId = req.user._id;
     const dosageId = req.params.id;
 
-    const dosage = await Dosage.findOne({ _id: dosageId, userId: userId });
+    const dosages = await Dosage.find({ _id: dosageId, userId: userId });
 
-    if (!dosage) {
+    if (!dosages) {
       return res.status(404).json({
         status: "fail",
         message: "Dosage not found or does not belong to the user",
@@ -94,7 +94,7 @@ exports.getDosageOfLogedIn = async (req, res) => {
 
     return res.status(200).json({
       status: "success",
-      data: dosage,
+      data: dosages,
     });
   } catch (error) {
     return res.status(500).json({
@@ -125,7 +125,6 @@ exports.getAllDosages = async (req, res) => {
 // Update
 exports.updateDosage = async (req, res) => {
   try {
-    const userId = req.user._id;
     const dosageId = req.params.id;
     const { duration, frequency, description, timing } = req.body;
 
@@ -201,7 +200,7 @@ exports.markDosageSlot = async (req, res) => {
     const { dosageID, slotID, isCompleted } = req.body;
 
     const dosage = await Dosage.findOneAndUpdate(
-      { userId: userId, _id: dosageID, "slots.slotID": slotID },
+      { userId: userId, _id: dosageID, "slots._id": slotID },
       { $set: { "slots.$.isCompleted": isCompleted } },
       { new: true }
     );

@@ -38,10 +38,6 @@ const dosageSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
       },
-      slotID: {
-        type: String,
-        required: true,
-      },
     },
   ],
 });
