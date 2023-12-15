@@ -55,15 +55,6 @@ exports.getDosageById = async (req, res) => {
       });
     }
 
-    const userId = req.user._id;
-
-    if (userId != dosage.userId) {
-      return res.status(401).json({
-        status: "fail",
-        message: "You are not authorized to access this dose",
-      });
-    }
-
     return res.status(200).json({
       status: "success",
       data: dosage,
