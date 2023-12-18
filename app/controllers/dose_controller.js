@@ -1,4 +1,5 @@
 const Dosage = require("../models/dose_model");
+const translate = require("translate-google");
 
 exports.addDosage = async (req, res) => {
   try {
@@ -27,6 +28,14 @@ exports.addDosage = async (req, res) => {
       slots: slots,
       title: title,
     });
+
+    if (req.get("Lang")) {
+      let lang = req.get("Lang");
+      const titleData = await translate(title, { to: lang });
+      const descriptionData = await translate(description, { to: lang });
+      title = titleData;
+      description = descriptionData;
+    }
 
     return res.status(200).json({
       status: "success",
