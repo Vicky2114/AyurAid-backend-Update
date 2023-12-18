@@ -51,9 +51,8 @@ exports.updateUser = async (req, res) => {
       profileImage: profileImage,
     };
 
-    const updatedUser = await User.findByIdAndUpdate(req.user._id, {
-      $set: data,
-    });
+    await User.findByIdAndUpdate(req.user._id, { $set: data });
+    const updatedUser = await User.findById(req.user._id);
 
     return res.status(201).json({
       status: "success",
@@ -65,3 +64,4 @@ exports.updateUser = async (req, res) => {
     return res.status(500).send(err);
   }
 };
+

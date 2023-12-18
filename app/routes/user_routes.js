@@ -9,5 +9,6 @@ router.use(auth_controller.protect);
 router.get("/user", UserController.detailsOfLogenIn);
 router.get("/user/:id", UserController.detailsById);
 router.patch("/update", UserController.updateUser);
+router.post("/updatePassword", auth_controller.updatePassword);
 
 module.exports = router;

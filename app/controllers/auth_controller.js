@@ -246,3 +246,43 @@ exports.resetPassword = async (req, res, next) => {
     return res.status(500).send(err);
   }
 };
+
+exports.updatePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    let user = await User.findById(req.user.id).select("+password");
+
+    if (!(await user.authenticate(currentPassword, user.password))) {
+      return {
+        status: "fail",
+        message: "Password entered is incorrect",
+        statusCode: 400,
+      };
+    }
+
+    user.password = newPassword;
+    await user.save();
+    user = await User.findById(req.user.id);
+
+    const token = jwt.sign(
+      { id: user.id },
+      process.env.USER_VERIFICATION_TOKEN_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN,
+      }
+    );
+
+    return res.status(200).json({
+      status: "success",
+      data: {
+        user,
+        token,
+      },
+      message: "Password has Changed",
+      statusCode: 200,
+    });
+  } catch (err) {
+    return res.status(500).send(err);
+  }
+};
