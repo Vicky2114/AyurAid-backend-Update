@@ -32,7 +32,19 @@ const userSchema = mongoose.Schema({
   password: {
     type: String,
     required: [true, "Password is required"],
-    select: false,
+    .
+  },
+  degree: {
+    type: String,
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+  role: {
+    type: String,
+    enum: ["user", "expert"],
+    default: "user",
   },
   bookmarks: [
     {
