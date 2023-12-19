@@ -64,6 +64,63 @@ exports.signup = async (req, res) => {
   }
 };
 
+exports.signupExpert = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(422).send({ message: "Missing email id." });
+    }
+    const existingUser = await User.findOne({ email }).exec();
+
+    if (existingUser) {
+      return res.status(409).send({
+        message: "Email is already in use.",
+      });
+    }
+    const user = await User.create({
+      username: req.body.username,
+      email: req.body.email,
+      password: req.body.password,
+      fullName: req.body.fullName,
+      dob: req.body.dob,
+      country: req.body.country,
+      profileImage: req.body.profileImage,
+      degree: req.body.degree,
+      role: req.body.role,
+    });
+
+    const message = `Dear ${user.username},\n$Welcome to AyurAid!`;
+    await sendEmail({
+      email: email,
+      subject: "Welcome to AyurAid",
+      message,
+    });
+
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.USER_VERIFICATION_TOKEN_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN,
+      }
+    );
+    res.cookie("jwt", token, {
+      httpOnly: false,
+      secure: false,
+      sameSite: "none",
+    });
+    return res.status(201).json({
+      status: "success",
+      data: {
+        user: user.username,
+        token: token,
+      },
+    });
+  } catch (err) {
+    return res.status(500).send(err);
+  }
+};
+
 exports.login = async (req, res) => {
   try {
     const Identity = req.body.identity;
@@ -87,6 +144,67 @@ exports.login = async (req, res) => {
         message: "Incorrect email or password",
       });
     }
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.USER_VERIFICATION_TOKEN_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN,
+      }
+    );
+    req.user = user;
+    res.cookie("jwt", token, {
+      httpOnly: false,
+      secure: false,
+      sameSite: "none",
+    });
+    return res.status(201).json({
+      status: "success",
+      data: {
+        user: user.username,
+        email: user.email,
+        id: user._id,
+        profileImage: user.profileImage,
+        fullname: user.fullName,
+        token: token,
+      },
+    });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+exports.loginExpert = async (req, res) => {
+  try {
+    const Identity = req.body.identity;
+    const password = req.body.password;
+    if (!Identity || !password) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Please provide email and password",
+      });
+    }
+    let user = await User.findOne({ email: Identity }).select("+password");
+
+    if (!user) {
+      user = await User.findOne({ username: Identity }).select("+password");
+    }
+
+    if (!user || !(await user.authenticate(password, user.password))) {
+      res.cookie("jwt", undefined, { httpOnly: false, secure: false });
+      return res.status(401).json({
+        status: "fail",
+        message: "Incorrect email or password",
+      });
+    }
+
+    if(!user.isVerified || user.role != "expert"){
+      res.cookie("jwt", undefined, { httpOnly: false, secure: false });
+      return res.status(401).json({
+        status: "fail",
+        message: "You are not authorized",
+      });
+    }
+
     const token = jwt.sign(
       { id: user._id },
       process.env.USER_VERIFICATION_TOKEN_SECRET,
