@@ -566,7 +566,7 @@ exports.deleteComment = async (req, res) => {
         data: {
           message: "Comment not deleted",
         },
-      });
+      });s
     }
   } catch (err) {
     return res.status(500).send(err);
