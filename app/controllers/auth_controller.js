@@ -25,6 +25,12 @@ exports.signup = async (req, res) => {
       dob: req.body.dob,
       country: req.body.country,
       profileImage: req.body.profileImage,
+      isDiabetes: req.body.isDiabetes,
+      heart: req.body.heart,
+      lungs: req.body.lungs,
+      liver: req.body.liver,
+      allergies: req.body.allergies,
+      bmi: req.body.bmi,
     });
 
     const message = `Dear ${user.username},\n$Welcome to AyurAid!`;
