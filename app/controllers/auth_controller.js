@@ -286,3 +286,129 @@ exports.updatePassword = async (req, res, next) => {
     return res.status(500).send(err);
   }
 };
+
+// Expert Signup
+
+exports.expertSignup = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(422).send({ message: "Missing email id." });
+    }
+
+    const existingUser = await User.findOne({ email }).exec();
+    if (existingUser) {
+      return res.status(409).send({
+        message: "Email is already in use.",
+      });
+    }
+
+    const expert = await User.create({
+      username: req.body.username,
+      email: req.body.email,
+      password: req.body.password,
+      fullName: req.body.fullName,
+      dob: req.body.dob,
+      country: req.body.country,
+      profileImage: req.body.profileImage,
+      role: "expert",
+    });
+
+    const message = `Dear ${expert.username},\nWelcome to AyurAid!`;
+    await sendEmail({
+      email: email,
+      subject: "Welcome to AyurAid",
+      message,
+    });
+
+    const token = jwt.sign(
+      { id: expert._id },
+      process.env.USER_VERIFICATION_TOKEN_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN,
+      }
+    );
+
+    res.cookie("jwt", token, {
+      httpOnly: false,
+      secure: false,
+      sameSite: "none",
+    });
+
+    return res.status(201).json({
+      status: "success",
+      data: {
+        expert: expert.username,
+        token: token,
+      },
+    });
+  } catch (err) {
+    return res.status(500).send(err);
+  }
+};
+
+// Expert Login
+
+exports.expertLogin = async (req, res) => {
+  try {
+    const Identity = req.body.identity;
+    const password = req.body.password;
+
+    if (!Identity || !password) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Please provide email and password",
+      });
+    }
+
+    let expert = await User.findOne({ email: Identity, role: "expert" }).select(
+      "+password"
+    );
+
+    if (!expert) {
+      expert = await User.findOne({
+        username: Identity,
+        role: "expert",
+      }).select("+password");
+    }
+
+    if (!expert || !(await expert.authenticate(password, expert.password))) {
+      res.cookie("jwt", undefined, { httpOnly: false, secure: false });
+      return res.status(401).json({
+        status: "fail",
+        message: "Incorrect email or password",
+      });
+    }
+
+    const token = jwt.sign(
+      { id: expert._id },
+      process.env.USER_VERIFICATION_TOKEN_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN,
+      }
+    );
+
+    req.expert = expert;
+
+    res.cookie("jwt", token, {
+      httpOnly: false,
+      secure: false,
+      sameSite: "none",
+    });
+
+    return res.status(201).json({
+      status: "success",
+      data: {
+        expert: expert.username,
+        email: expert.email,
+        id: expert._id,
+        profileImage: expert.profileImage,
+        fullname: expert.fullName,
+        token: token,
+      },
+    });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
