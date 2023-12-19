@@ -10,7 +10,7 @@ router.get("/userInfo", blog_controller.userInfo); //All blogs sorted by likes
 router.get("/allBlogs", blog_controller.allBlogs); //All blogs sorted by likes
 router.get("/blog/:id", blog_controller.blogById); //Particular Blog
 router.get("/blogs", blog_controller.blogs); //Blog of logedIn user
-router.get("/search/:titleRec", blog_controller.searchTitle);
+router.get("/search", blog_controller.search);
 router.get("/filter/:tag", blog_controller.filterTag);
 
 router.post("/addBlog", blog_controller.addBlog);
