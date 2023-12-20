@@ -63,28 +63,29 @@ exports.allBlogs = async (req, res) => {
       updatedAt: 1,
     });
 
-    let promises;
     if (req.get("Lang")) {
-      let lang = req.get("Lang");
-      promises = allBlogs.map(async (e) => {
-        const titleData = await translate(e.title, { to: lang });
-        const descriptionData = await translate(e.description, { to: lang });
+      const lang = req.get("Lang");
+      const translationPromises = allBlogs.map(async (e) => {
+        const [titleData, descriptionData] = await Promise.all([
+          translate(e.title, { to: lang }),
+          translate(e.description, { to: lang }),
+        ]);
+
         e.title = titleData;
         e.description = descriptionData;
       });
+
+      await Promise.all(translationPromises);
     }
 
-    Promise.all(promises)
-      .then(() => {
-        return res.status(201).json({
-          status: "success",
-          data: {
-            allBlogs,
-          },
-        });
-      })
-      .catch((err) => {});
+    return res.status(201).json({
+      status: "success",
+      data: {
+        allBlogs,
+      },
+    });
   } catch (err) {
+    console.error(err);
     return res.status(500).send(err);
   }
 };
