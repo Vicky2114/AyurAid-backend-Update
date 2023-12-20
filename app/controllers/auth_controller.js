@@ -20,6 +20,7 @@ exports.signup = async (req, res) => {
       allergies,
       bmi,
       role,
+      degree,
     } = req.body;
 
     if (!email) {
@@ -47,6 +48,7 @@ exports.signup = async (req, res) => {
       allergies: allergies,
       bmi: bmi,
       role: role,
+      degree: degree,
     });
 
     const message = `Dear ${user.username},\n$Welcome to AyurAid!`;

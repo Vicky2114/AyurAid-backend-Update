@@ -41,7 +41,7 @@ exports.detailsById = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
-    const { fullName, email, country, dob, profileImage } = req.body;
+    const { fullName, email, country, dob, profileImage, degree } = req.body;
 
     const data = {
       fullName: fullName,
@@ -49,6 +49,7 @@ exports.updateUser = async (req, res) => {
       country: country,
       dob: dob,
       profileImage: profileImage,
+      degree: degree,
     };
 
     await User.findByIdAndUpdate(req.user._id, { $set: data });
@@ -64,4 +65,3 @@ exports.updateUser = async (req, res) => {
     return res.status(500).send(err);
   }
 };
-

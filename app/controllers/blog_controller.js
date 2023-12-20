@@ -58,10 +58,7 @@ exports.addBlog = async (req, res) => {
 
 exports.allBlogs = async (req, res) => {
   try {
-    let allBlogs = await Blog.find({}).sort({
-      likes: -1,
-      updatedAt: 1,
-    });
+    let allBlogs = await Blog.find({});
 
     if (req.get("Lang")) {
       const lang = req.get("Lang");
