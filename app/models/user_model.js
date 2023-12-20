@@ -33,6 +33,25 @@ const userSchema = mongoose.Schema({
     type: String,
     required: [true, "Password is required"],
   },
+  isDiabetes: {
+    type: Boolean,
+    default: false,
+  },
+  heart: {
+    type: String,
+  },
+  lungs: {
+    type: String,
+  },
+  liver: {
+    type: String,
+  },
+  allergies: {
+    type: Array,
+  },
+  bmi: {
+    type: Number,
+  },
   degree: {
     type: String,
   },

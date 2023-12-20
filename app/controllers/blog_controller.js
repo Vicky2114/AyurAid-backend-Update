@@ -384,13 +384,22 @@ exports.filterTag = async (req, res) => {
   }
 };
 
-exports.searchTitle = async (req, res) => {
+exports.search = async (req, res) => {
   try {
-    const { titleRec } = req.body;
+    const { searchInput } = req.body;
 
-    const blogs = await Blog.find({
-      title: { $regex: titleRec, $options: "i" },
+    const blogsTitle = await Blog.find({
+      title: { $regex: searchInput, $options: "i" },
     });
+
+    const blogsDes = await Blog.find(
+      {
+        description: { $regex: searchInput, $options: "i" },
+      },
+      { authorImage: 0 }
+    );
+
+    const blogs = blogsTitle.concat(blogsDes);
 
     let promises;
     if (req.get("Lang")) {
@@ -557,7 +566,7 @@ exports.deleteComment = async (req, res) => {
         data: {
           message: "Comment not deleted",
         },
-      });
+      });s
     }
   } catch (err) {
     return res.status(500).send(err);

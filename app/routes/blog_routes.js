@@ -1,3 +1,4 @@
+
 const express = require("express");
 const auth_controller = require("../controllers/auth_controller.js");
 const blog_controller = require("../controllers/blog_controller.js");
@@ -10,10 +11,10 @@ router.get("/userInfo", blog_controller.userInfo); //All blogs sorted by likes
 router.get("/allBlogs", blog_controller.allBlogs); //All blogs sorted by likes
 router.get("/blog/:id", blog_controller.blogById); //Particular Blog
 router.get("/blogs", blog_controller.blogs); //Blog of logedIn user
-router.get("/search/:titleRec", blog_controller.searchTitle);
 router.get("/filter/:tag", blog_controller.filterTag);
 
 router.post("/addBlog", blog_controller.addBlog);
+router.post("/search", blog_controller.search);
 
 router.patch("/like/:id", blog_controller.likeBlog);
 router.patch("/unlike/:id", blog_controller.unlikeBlog);
