@@ -5,7 +5,22 @@ const sendEmail = require("../utils/email");
 
 exports.signup = async (req, res) => {
   try {
-    const { email } = req.body;
+    const {
+      email,
+      username,
+      password,
+      fullName,
+      dob,
+      country,
+      profileImage,
+      isDiabetes,
+      heart,
+      lungs,
+      liver,
+      allergies,
+      bmi,
+      role,
+    } = req.body;
 
     if (!email) {
       return res.status(422).send({ message: "Missing email id." });
@@ -18,19 +33,20 @@ exports.signup = async (req, res) => {
       });
     }
     const user = await User.create({
-      username: req.body.username,
-      email: req.body.email,
-      password: req.body.password,
-      fullName: req.body.fullName,
-      dob: req.body.dob,
-      country: req.body.country,
-      profileImage: req.body.profileImage,
-      isDiabetes: req.body.isDiabetes,
-      heart: req.body.heart,
-      lungs: req.body.lungs,
-      liver: req.body.liver,
-      allergies: req.body.allergies,
-      bmi: req.body.bmi,
+      username: username,
+      email: email,
+      password: password,
+      fullName: fullName,
+      dob: dob,
+      country: country,
+      profileImage: profileImage,
+      isDiabetes: isDiabetes,
+      heart: heart,
+      lungs: lungs,
+      liver: liver,
+      allergies: allergies,
+      bmi: bmi,
+      role: role,
     });
 
     const message = `Dear ${user.username},\n$Welcome to AyurAid!`;
@@ -166,6 +182,7 @@ exports.login = async (req, res) => {
         profileImage: user.profileImage,
         fullname: user.fullName,
         token: token,
+        role: user.role,
       },
     });
   } catch (err) {
@@ -197,7 +214,7 @@ exports.loginExpert = async (req, res) => {
       });
     }
 
-    if(!user.isVerified || user.role != "expert"){
+    if (!user.isVerified || user.role != "expert") {
       res.cookie("jwt", undefined, { httpOnly: false, secure: false });
       return res.status(401).json({
         status: "fail",

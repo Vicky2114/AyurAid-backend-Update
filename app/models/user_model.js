@@ -61,7 +61,6 @@ const userSchema = mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["user", "expert"],
     default: "user",
   },
   bookmarks: [
