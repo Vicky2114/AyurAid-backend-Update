@@ -395,13 +395,13 @@ exports.updatePassword = async (req, res, next) => {
     const { currentPassword, newPassword } = req.body;
 
     let user = await User.findById(req.user.id).select("+password");
-
-    if (!(await user.authenticate(currentPassword, user.password))) {
-      return {
+    console.log(user);
+    const bol = await user.authenticate(currentPassword, user.password);
+    if (!bol) {
+      return res.status(400).send({
         status: "fail",
-        message: "Password entered is incorrect",
-        statusCode: 400,
-      };
+        message: "Password old entered is incorrect",
+      });
     }
 
     user.password = newPassword;

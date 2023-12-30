@@ -62,7 +62,6 @@ app.use("/api/blog", require("./app/routes/blog_routes.js"));
 app.use("/api/dose", require("./app/routes/dose_routes.js"));
 app.use("/api/user", require("./app/routes/user_routes.js"));
 
-
 app.get("/", (req, res) => {
   res.end("Hello from server");
 });
