@@ -7,10 +7,10 @@ exports.addDosage = async (req, res) => {
 
     const duration = req.body.duration;
     const frequency = req.body.frequency;
-    const description = req.body.description;
+    let description = req.body.description;
     const timing = req.body.timing;
     const slots = req.body.slots;
-    const title = req.body.title;
+    let title = req.body.title;
 
     if (timing.length !== frequency) {
       return res.status(400).json({ message: "Add timing for all frequency" });
