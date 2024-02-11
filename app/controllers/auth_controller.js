@@ -58,6 +58,14 @@ exports.signup = async (req, res) => {
       message,
     });
 
+    if (user.verifyEmail == false) {
+      res.cookie("jwt", undefined, { httpOnly: false, secure: false });
+      return res.status(401).json({
+        status: "fail",
+        message: "Please verify your email from mail",
+      });
+    }
+
     const token = jwt.sign(
       { id: user._id },
       process.env.USER_VERIFICATION_TOKEN_SECRET,
@@ -114,6 +122,14 @@ exports.signupExpert = async (req, res) => {
       subject: "Welcome to AyurAid",
       message,
     });
+
+    if (user.verifyEmail == false) {
+      res.cookie("jwt", undefined, { httpOnly: false, secure: false });
+      return res.status(401).json({
+        status: "fail",
+        message: "Please verify your email from mail",
+      });
+    }
 
     const token = jwt.sign(
       { id: user._id },
