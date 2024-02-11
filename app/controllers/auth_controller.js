@@ -51,7 +51,7 @@ exports.signup = async (req, res) => {
       degree: degree,
     });
 
-    const message = `Dear ${user.username},\n$Welcome to AyurAid!`;
+    const message = `Dear ${user.username},\n$Welcome to AyurAid!\nTo verify your email id click on this link\n https://ayur-aid-web.vercel.app/verifyEmail/${user._id}`;
     await sendEmail({
       email: email,
       subject: "Welcome to AyurAid",
@@ -108,7 +108,7 @@ exports.signupExpert = async (req, res) => {
       role: req.body.role,
     });
 
-    const message = `Dear ${user.username},\n$Welcome to AyurAid!`;
+    const message = `Dear ${user.username},\n$Welcome to AyurAid!\nTo verify your email id click on this link\n https://ayur-aid-web.vercel.app/${user._id}`;
     await sendEmail({
       email: email,
       subject: "Welcome to AyurAid",
@@ -169,6 +169,21 @@ exports.login = async (req, res) => {
         expiresIn: process.env.JWT_EXPIRES_IN,
       }
     );
+
+    if (user.verifyEmail == false) {
+      const message = `Dear ${user.username},\n$Welcome to AyurAid!\nTo verify your email id click on this link\n https://ayur-aid-web.vercel.app/verifyEmail/${user._id}`;
+      await sendEmail({
+        email: user.email,
+        subject: "Verify your email with AyurAid",
+        message,
+      });
+      res.cookie("jwt", undefined, { httpOnly: false, secure: false });
+      return res.status(401).json({
+        status: "fail",
+        message: "Please verify your email from mail",
+      });
+    }
+
     req.user = user;
     res.cookie("jwt", token, {
       httpOnly: false,
@@ -224,6 +239,20 @@ exports.loginExpert = async (req, res) => {
       });
     }
 
+    if (user.verifyEmail == false) {
+      const message = `Dear ${user.username},\n$Welcome to AyurAid!\nTo verify your email id click on this link\n https://ayur-aid-web.vercel.app/verifyEmail/${user._id}`;
+      await sendEmail({
+        email: user.email,
+        subject: "Verify your email with AyurAid",
+        message,
+      });
+      res.cookie("jwt", undefined, { httpOnly: false, secure: false });
+      return res.status(401).json({
+        status: "fail",
+        message: "Please verify your email from mail",
+      });
+    }
+
     const token = jwt.sign(
       { id: user._id },
       process.env.USER_VERIFICATION_TOKEN_SECRET,
@@ -250,6 +279,34 @@ exports.loginExpert = async (req, res) => {
     });
   } catch (err) {
     res.status(500).send({ message: err.message });
+  }
+};
+
+exports.emailVerification = async (req, res, next) => {
+  try {
+    const verifyEmailId = req.params.verifyEmailId;
+
+    let user = await User.findById(verifyEmailId);
+    if (!user) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Email not found",
+        statusCode: 400,
+      });
+    }
+    user.verifyEmail = true;
+    await user.save();
+    return res.status(200).json({
+      status: "success",
+      message: "Email id verified",
+      statusCode: 200,
+    });
+  } catch {
+    return res.status(400).json({
+      status: "fail",
+      message: "Email id not verified",
+      statusCode: 400,
+    });
   }
 };
 
