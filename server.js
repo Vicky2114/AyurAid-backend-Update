@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 dotenv.config({ path: "./.env" });
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-
+//not all
 const app = express();
 app.use(
   cors({
